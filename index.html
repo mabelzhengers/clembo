@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    
+      <nav class="sidebar">
+          <div class="logo">dashboard</div>
+          <div id="welcomeMessage" style="font-size: 14px; margin-bottom: 20px; color: #7a7a7a; padding-left: 10px;">hello, guest</div>
+        
+          <button class="tab-btn active" data-tab="home-page">homepage</button>
+          <button class="tab-btn" data-tab="todo-page">to-dos</button>
+          <button class="tab-btn" data-tab="habit-page">habits</button>
+          <button class="tab-btn" data-tab="tracker-page">tracker</button>
+          <button class="tab-btn" data-tab="study-page">study</button>
+          <button class="tab-btn" data-tab="calendar-page">waag</button>
+          <button class="tab-btn" data-tab="maag-page">maag</button>
+          <button class="tab-btn" data-tab="dump-page">brain dump</button>
+          <button class="tab-btn" data-tab="settings-page">settings</button>
+      </nav>
+
+      <main class="content-area">
+        
+          <div id="home-page" class="tab-content active">
+              <h1 id="homeGreeting">welcome back</h1>
+              <p style="text-align: center; color: #7a7a7a; margin-bottom: 25px; font-style: italic;">today's overview:</p>
+            
+              <h3 style="color: #e07a5f; margin-bottom: 12px;">countdown</h3>
+              <div id="countdownContainer" class="home-grid"></div>
+
+              <h3 style="color: #e07a5f; margin-top: 30px; margin-bottom: 12px;">upcoming events</h3>
+              <ul id="homeEventsList">
+                  <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+              </ul>
+          </div>
+
+          <div id="todo-page" class="tab-content">
+              <h1>to-dos</h1>
+              <div class="input-area">
+                  <input type="text" id="taskInput" placeholder="add task">
+                  <button id="addBtn">add</button>
+              </div>
+              <ul id="taskList"></ul>
+          </div>
+
+          <div id="habit-page" class="tab-content">
+              <h1>habits</h1>
+              <div class="input-area">
+                  <input type="text" id="habitInput" placeholder="new habit">
+                  <button id="addHabitBtn">add</button>
+              </div>
+              <ul id="habitList"></ul>
+          </div>
+
+          <div id="tracker-page" class="tab-content">
+              <h1>tracker</h1>
+            
+              <div class="tracker-header">
+                  <div id="currentMonthYear"></div>
+                  
+                  <div class="rating-picker" id="ratingPicker">
+                      <button class="orange-rating-btn" data-rating="1" data-score="1">
+                          <svg viewBox="0 0 24 24" class="rating-orange-icon"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm1,4.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,13,6.5Zm-1,11a5,5,0,1,1,5-5A5,5,0,0,1,12,17.5Z"/><path d="M15.5,3.5c-.8.3-2,.5-2.5,0s-.3-1.7.5-2,2-.5,2.5,0S16.3,3.2,15.5,3.5Z"/></svg>
+                      </button>
+                      <button class="orange-rating-btn" data-rating="2" data-score="2">
+                          <svg viewBox="0 0 24 24" class="rating-orange-icon"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm1,4.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,13,6.5Zm-1,11a5,5,0,1,1,5-5A5,5,0,0,1,12,17.5Z"/><path d="M15.5,3.5c-.8.3-2,.5-2.5,0s-.3-1.7.5-2,2-.5,2.5,0S16.3,3.2,15.5,3.5Z"/></svg>
+                      </button>
+                      <button class="orange-rating-btn" data-rating="3" data-score="3">
+                          <svg viewBox="0 0 24 24" class="rating-orange-icon"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm1,4.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,13,6.5Zm-1,11a5,5,0,1,1,5-5A5,5,0,0,1,12,17.5Z"/><path d="M15.5,3.5c-.8.3-2,.5-2.5,0s-.3-1.7.5-2,2-.5,2.5,0S16.3,3.2,15.5,3.5Z"/></svg>
+                      </button>
+                      <button class="orange-rating-btn" data-rating="4" data-score="4">
+                          <svg viewBox="0 0 24 24" class="rating-orange-icon"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm1,4.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,13,6.5Zm-1,11a5,5,0,1,1,5-5A5,5,0,0,1,12,17.5Z"/><path d="M15.5,3.5c-.8.3-2,.5-2.5,0s-.3-1.7.5-2,2-.5,2.5,0S16.3,3.2,15.5,3.5Z"/></svg>
+                      </button>
+                      <button class="orange-rating-btn" data-rating="5" data-score="5">
+                          <svg viewBox="0 0 24 24" class="rating-orange-icon"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm1,4.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,13,6.5Zm-1,11a5,5,0,1,1,5-5A5,5,0,0,1,12,17.5Z"/><path d="M15.5,3.5c-.8.3-2,.5-2.5,0s-.3-1.7.5-2,2-.5,2.5,0S16.3,3.2,15.5,3.5Z"/></svg>
+                      </button>
+                  </div>
+              </div>
+
+              <div class="calendar-days-grid" id="calendarDaysGrid"></div>
+
+              <div class="archive-section">
+                  <h3>archive</h3>
+                  <ul id="archiveList"></ul>
+              </div>
+          </div>
+
+          <div id="study-page" class="tab-content">
+              <h1>study</h1>
+            
+              <div class="timer-card">
+                  <div class="timer-presets">
+                      <button class="timer-preset-btn" onclick="setTimer(5)">5m</button>
+                      <button class="timer-preset-btn" onclick="setTimer(15)">15m</button>
+                      <button class="timer-preset-btn" onclick="setTimer(25)">25m</button>
+                  </div>
+                  <div id="timerDisplay">25:00</div>
+                  <div class="timer-controls">
+                      <button id="startStopBtn">start</button>
+                      <button id="resetTimerBtn">reset</button>
+                  </div>
+              </div>
+
+              <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">log study hours</h3>
+              <div class="study-log-form" style="margin-bottom: 25px;">
+                  <div class="input-area" style="margin-bottom: 10px; gap: 8px;">
+                      <select id="subjectSelect" style="flex: 1; padding: 12px; background-color: #faf9f6; border: 2px solid #e1ded7; border-radius: 8px; color: #4a4a4a;">
+                          <option value="cat1">subject 1</option>
+                          <option value="cat2">subject 2</option>
+                          <option value="cat3">subject 3</option>
+                      </select>
+                      <input type="number" id="studyTimeInput" placeholder="minutes studied (ex 45)" style="flex: 1;">
+                  </div>
+                  <button id="logHoursBtn" style="width: 100%; padding: 12px; font-weight: bold; background-color: #e07a5f; color: white; border: none; border-radius: 8px; cursor: pointer;">log session</button>
+              </div>
+             
+              <div id="studyHoursList" style="margin-bottom: 25px;"></div>
+
+              <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">subjects</h3>
+              <div class="input-area" style="flex-direction: column; gap: 8px; margin-bottom: 25px;">
+                  <input type="text" id="cat1Input" placeholder="name for subject 1">
+                  <input type="text" id="cat2Input" placeholder="name for subject 2">
+                  <input type="text" id="cat3Input" placeholder="name for subject 3">
+                  <button id="saveCategoriesBtn" style="width: 100%; padding: 12px; font-weight: bold; background-color: #e07a5f; color: white; border: none; border-radius: 8px; cursor: pointer;">save subject names</button>
+              </div>
+
+              <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">goals</h3>
+              <div class="input-area">
+                  <input type="text" id="aimInput" placeholder="current goal">
+                  <button id="addAimBtn">add</button>
+              </div>
+              <ul id="aimList"></ul>
+
+              <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">history</h3>
+              <ul id="logList"></ul>
+          </div>
+
+          <div id="calendar-page" class="tab-content">
+              <h1>waag</h1>
+            
+              <div class="calendar-inputs">
+                  <input type="text" id="calendarEventInput" placeholder="what's happening?">
+                  <select id="calendarDaySelect">
+                      <option value="monday">monday</option>
+                      <option value="tuesday">tuesday</option>
+                      <option value="wednesday">wednesday</option>
+                      <option value="thursday">thursday</option>
+                      <option value="friday">friday</option>
+                      <option value="saturday">saturday</option>
+                      <option value="sunday">sunday</option>
+                  </select>
+                  <button id="addCalendarEventBtn">add</button>
+              </div>
+
+              <div class="waag-grid">
+                  <div class="day-column" data-day="monday">
+                      <div class="day-header">mon</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="tuesday">
+                      <div class="day-header">tue</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="wednesday">
+                      <div class="day-header">wed</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="thursday">
+                      <div class="day-header">thu</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="friday">
+                      <div class="day-header">fri</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="saturday">
+                      <div class="day-header">sat</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+                  <div class="day-column" data-day="sunday">
+                      <div class="day-header">sun</div>
+                      <ul class="day-events-list"></ul>
+                  </div>
+              </div>
+          </div>
+
+          <div id="maag-page" class="tab-content">
+              <h1 id="maagMonthHeader">month at a glance</h1>
+            
+              <div class="calendar-inputs">
+                  <input type="text" id="maagEventInput" placeholder="what's happening?">
+                  <select id="maagDateSelect" style="padding: 12px; background-color: #faf9f6; border: 2px solid #e1ded7; border-radius: 8px; color: #4a4a4a; font-family: inherit;">
+                      </select>
+                  <button id="addMaagEventBtn">add</button>
+              </div>
+
+              <div id="maagDaysGrid">
+                  </div>
+          </div>
+
+          <div id="dump-page" class="tab-content">
+              <h1>brain dump</h1>
+              <p class="dump-subtitle">dump thoughts here</p>
+            
+              <div class="dump-container">
+                  <textarea id="brainDumpArea" placeholder="what's on your mind?"></textarea>
+                  <div class="dump-footer">
+                      <span id="saveStatus" style="font-size: 13px; color: #b5b2a9;">saved</span>
+                      <button id="clearDumpBtn">clear</button>
+                  </div>
+              </div>
+          </div>
+
+          <div id="settings-page" class="tab-content">
+              <h1>settings</h1>
+            
+              <h3 style="margin-bottom: 10px; color: #e07a5f;">display</h3>
+              <div class="input-area" style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px; background: #faf9f6; padding: 12px 16px; border-radius: 8px; border: 2px solid #e1ded7;">
+                  <span style="font-size: 16px; color: #4a4a4a; cursor: default;">dark mode</span>
+                  <input type="checkbox" id="darkModeToggle" style="flex: none; width: 20px; height: 20px; cursor: pointer;">
+              </div>
+
+              <h3 style="margin-bottom: 10px; color: #e07a5f;">name</h3>
+              <div class="input-area" style="margin-bottom: 30px;">
+                  <input type="text" id="usernameInput" placeholder="name">
+                  <button id="saveUsernameBtn">save</button>
+              </div>
+
+              <h3 style="margin-bottom: 10px; color: #e07a5f;">dates</h3>
+              <div class="exam-settings-form">
+                  <div class="input-area" style="margin-bottom: 10px;">
+                      <input type="text" id="examNameInput" placeholder="name (ex math final)">
+                      <input type="date" id="examDateInput">
+                  </div>
+                  <button id="addExamBtn" style="width:100%; display:block; margin-bottom: 20px;">add tracking</button>
+              </div>
+              <ul id="settingsExamList"></ul>
+          </div>
+
+      </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
