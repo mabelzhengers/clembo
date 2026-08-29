@@ -12,7 +12,13 @@
  <div class="app-layout">
   
      <nav class="sidebar">
-         <div class="logo">dashboard</div>
+         <div class="logo">
+             <svg class="logo-icon" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                 <circle cx="14" cy="16.5" r="9.5" fill="#e07a5f"/>
+                 <path d="M14.5 8.5 C13.5 4 17 1 21.5 1 C21.5 5.2 18 8.5 14.5 8.5 Z" fill="#4a7c59"/>
+             </svg>
+             <span>dashboard</span>
+         </div>
          <div id="welcomeMessage" style="font-size: 14px; margin-bottom: 20px; color: #7a7a7a; padding-left: 10px;">hello, guest</div>
       
          <button class="tab-btn active" data-tab="home-page">homepage</button>
@@ -23,6 +29,8 @@
          <button class="tab-btn" data-tab="calendar-page">calendar</button>
          <button class="tab-btn" data-tab="dump-page">brain dump</button>
          <button class="tab-btn" data-tab="settings-page">settings</button>
+
+         <div class="sidebar-footer">clembo</div>
      </nav>
 
 
@@ -67,10 +75,25 @@
 
          <div id="todo-page" class="tab-content">
              <h1>to-dos</h1>
-             <div class="input-area">
-                 <input type="text" id="taskInput" placeholder="add task">
-                 <button id="addBtn">add</button>
+             <div class="todo-form-card">
+                 <input type="text" id="taskInput" placeholder="add task" class="todo-task-input">
+                 <div class="todo-form-options">
+                     <select id="taskPrioritySelect">
+                         <option value="low">low</option>
+                         <option value="medium" selected>medium</option>
+                         <option value="high">high</option>
+                     </select>
+                     <input type="date" id="taskDeadlineInput">
+                     <button id="addBtn">add</button>
+                 </div>
              </div>
+
+             <div class="view-toggle" id="todoViewToggle">
+                 <button class="view-toggle-btn active" data-view="pending">pending</button>
+                 <button class="view-toggle-btn" data-view="completed">completed</button>
+                 <button class="view-toggle-btn" data-view="all">all</button>
+             </div>
+
              <ul id="taskList"></ul>
          </div>
 
@@ -153,9 +176,9 @@
                  <div id="studyHoursList" style="margin-bottom: 25px;"></div>
 
 
-                 <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">subjects</h3>
+                 <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">activities</h3>
                  <div class="input-area" style="margin-bottom: 8px;">
-                     <input type="text" id="newSubjectInput" placeholder="add a subject">
+                     <input type="text" id="newSubjectInput" placeholder="add an activity">
                      <button id="addSubjectBtn">add</button>
                  </div>
                  <ul id="subjectManageList"></ul>
@@ -163,10 +186,16 @@
 
 
              <div id="studyBreakdownView" class="view-hidden">
-                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">time breakdown</h3>
+                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">today</h3>
                  <div class="breakdown-container">
-                     <div class="breakdown-chart" id="breakdownChart"></div>
-                     <ul class="breakdown-legend" id="breakdownLegend"></ul>
+                     <div class="breakdown-chart" id="breakdownChartDay"></div>
+                     <ul class="breakdown-legend" id="breakdownLegendDay"></ul>
+                 </div>
+
+                 <h3 style="margin-top: 30px; margin-bottom: 10px; color: #e07a5f;">this week</h3>
+                 <div class="breakdown-container">
+                     <div class="breakdown-chart" id="breakdownChartWeek"></div>
+                     <ul class="breakdown-legend" id="breakdownLegendWeek"></ul>
                  </div>
              </div>
          </div>
@@ -197,13 +226,12 @@
          <div id="dump-page" class="tab-content">
              <h1>brain dump</h1>
           
-             <div class="dump-container">
+             <div class="dump-compose">
                  <textarea id="brainDumpArea" placeholder="what's on your mind?"></textarea>
-                 <div class="dump-footer">
-                     <span id="saveStatus" style="font-size: 13px; color: #b5b2a9;">saved</span>
-                     <button id="clearDumpBtn">clear</button>
-                 </div>
+                 <button id="postDumpBtn">post</button>
              </div>
+
+             <div id="dumpPostsList" class="dump-posts-list"></div>
          </div>
 
 
