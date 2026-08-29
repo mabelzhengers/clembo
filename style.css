@@ -41,6 +41,34 @@ body {
  color: #e07a5f;             /* Signature cozy warm orange */
  letter-spacing: -0.5px;     /* Tighter spacing makes it look friendlier */
  text-transform: lowercase;  /* Trendy, soft aesthetic */
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 8px;
+}
+
+
+.logo-icon {
+ width: 26px;
+ height: 26px;
+ flex-shrink: 0;
+}
+
+
+.sidebar-footer {
+ margin-top: auto;
+ padding-top: 20px;
+ text-align: center;
+ font-size: 13px;
+ font-weight: 800;
+ letter-spacing: 1px;
+ text-transform: lowercase;
+ color: #c9b8a6;
+}
+
+
+body.dark-mode .sidebar-footer {
+ color: #54433a;
 }
 
 
@@ -230,37 +258,101 @@ body.dark-mode .day-header-date {
 }
 
 
-.dump-container {
+.dump-compose {
  display: flex;
  flex-direction: column;
- height: calc(100vh - 160px);
  border: 2px solid #ebdccb;
  border-radius: 12px;
  background: #faf6f0;
  overflow: hidden;
+ margin-bottom: 25px;
 }
 
 
 textarea#brainDumpArea {
- flex: 1;
  border: none;
  background: transparent;
  padding: 20px;
  font-size: 16px;
- resize: none;
+ min-height: 140px;
+ resize: vertical;
  outline: none;
  color: #4e443c;
  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
 }
 
 
-.dump-footer {
+#postDumpBtn {
+ margin: 0 16px 16px auto;
+ background-color: #e07a5f !important;
+ color: #ffffff !important;
+ border: none !important;
+ padding: 10px 26px;
+}
+
+
+#postDumpBtn:hover {
+ background-color: #cb654b !important;
+}
+
+
+.dump-posts-list {
  display: flex;
- justify-content: space-between;
- align-items: center;
- padding: 12px 20px;
- background: #ebdccb;
- border-top: 2px solid #ebdccb;
+ flex-direction: column;
+ gap: 14px;
+}
+
+
+.dump-post-card {
+ position: relative;
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 10px;
+ padding: 18px 18px 14px 40px;
+}
+
+
+.dump-post-delete {
+ position: absolute;
+ top: 8px;
+ left: 8px;
+ background: none !important;
+ border: none !important;
+ color: #e07a5f !important;
+ cursor: pointer;
+ padding: 2px 6px !important;
+ font-size: 14px;
+ line-height: 1;
+}
+
+
+.dump-post-delete:hover {
+ opacity: 0.7;
+}
+
+
+.dump-post-text {
+ font-size: 15px;
+ color: #4e443c;
+ white-space: pre-wrap;
+ word-break: break-word;
+}
+
+
+.dump-post-timestamp {
+ margin-top: 10px;
+ font-size: 12px;
+ color: #a68f7b;
+}
+
+
+body.dark-mode .dump-post-text {
+ color: #f7eade;
+}
+
+
+body.dark-mode .dump-post-timestamp {
+ color: #bcae9e;
 }
 
 
@@ -282,7 +374,8 @@ body.dark-mode .sidebar,
 body.dark-mode .tab-content,
 body.dark-mode .day-events-list li,
 body.dark-mode .maag-events-list li,
-body.dark-mode .dump-container {
+body.dark-mode .dump-compose,
+body.dark-mode .dump-post-card {
  background-color: #2e2520; /* Deep cocoa brown container panels */
  border-color: #42352e;
  color: #f7eade;
@@ -323,12 +416,6 @@ body.dark-mode .tab-btn:hover {
 body.dark-mode .tab-btn.active {
  background-color: #e07a5f;
  color: #ffffff;
-}
-
-
-body.dark-mode .dump-footer {
- background-color: #251e1a;
- border-color: #42352e;
 }
 
 
@@ -796,7 +883,41 @@ body.dark-mode .reminder-textarea {
 
 
 /* ==========================================
-  TO-DO CHECKBOXES & OVERDUE BADGE
+  TO-DO ENTRY FORM CARD
+  ========================================== */
+.todo-form-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 12px;
+ padding: 18px;
+ margin-bottom: 20px;
+ display: flex;
+ flex-direction: column;
+ gap: 12px;
+}
+
+
+body.dark-mode .todo-form-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.todo-task-input {
+ width: 100%;
+}
+
+
+.todo-form-options {
+ display: flex;
+ gap: 10px;
+ flex-wrap: wrap;
+ margin-bottom: 0;
+}
+
+
+/* ==========================================
+  TO-DO CHECKBOXES, DEADLINES & PRIORITY
   ========================================== */
 .task-left {
  display: flex;
@@ -814,6 +935,34 @@ body.dark-mode .reminder-textarea {
 }
 
 
+.task-text-wrap {
+ display: flex;
+ flex-direction: column;
+ gap: 3px;
+}
+
+
+.task-deadline {
+ font-size: 11px;
+ font-weight: 700;
+ color: #a68f7b;
+ text-transform: lowercase;
+}
+
+
+body.dark-mode .task-deadline {
+ color: #bcae9e;
+}
+
+
+.task-right {
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ flex: none;
+}
+
+
 .overdue-badge {
  background-color: #c0392b;
  color: #ffffff;
@@ -822,7 +971,6 @@ body.dark-mode .reminder-textarea {
  padding: 4px 9px;
  border-radius: 12px;
  flex: none;
- margin-left: 8px;
 }
 
 
@@ -831,10 +979,54 @@ body.dark-mode .overdue-badge {
 }
 
 
+.priority-badge {
+ font-size: 11px;
+ font-weight: 800;
+ text-transform: lowercase;
+ padding: 4px 10px;
+ border-radius: 12px;
+ color: #ffffff;
+ flex: none;
+ letter-spacing: 0.3px;
+}
+
+
+.priority-badge.priority-low {
+ background-color: #4a7c59;
+}
+
+
+.priority-badge.priority-medium {
+ background-color: #cf9a2c;
+}
+
+
+.priority-badge.priority-high {
+ background-color: #c0392b;
+}
+
+
+body.dark-mode .priority-badge.priority-low {
+ background-color: #5c9c6f;
+}
+
+
+body.dark-mode .priority-badge.priority-medium {
+ background-color: #e6b84a;
+ color: #3a2e18;
+}
+
+
+body.dark-mode .priority-badge.priority-high {
+ background-color: #d84a3a;
+}
+
+
 li.task-complete {
  opacity: 0.35;
  transform: scale(0.98);
 }
+
 
 
 /* ==========================================
