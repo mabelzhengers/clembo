@@ -144,17 +144,31 @@ if (reminderArea) {
 
 // ==========================================
 // to-dos workflow tracker
-// each task remembers when it was created, so we
-// can show how many days it's been sitting there.
-// checking it off marks it done instead of just
-// deleting it outright.
+// each task remembers when it was created (so we
+// can show how many days it's been sitting there),
+// carries a priority level and an optional deadline,
+// and can be marked complete without being deleted —
+// so it can still show up under "completed" or "all".
 // ==========================================
 const taskInput = document.getElementById('taskInput');
+const taskPrioritySelect = document.getElementById('taskPrioritySelect');
+const taskDeadlineInput = document.getElementById('taskDeadlineInput');
 const addBtn = document.getElementById('addBtn');
 const taskList = document.getElementById('taskList');
+const todoViewToggle = document.getElementById('todoViewToggle');
 
 
 let myTasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+let todoViewMode = localStorage.getItem('myTodoViewMode') || 'pending';
+
+
+// converts a stored YYYY-MM-DD deadline into mm-dd-yyyy for display
+function formatDeadlineDisplay(dateStr) {
+   const parts = dateStr.split('-');
+   if (parts.length !== 3) return dateStr;
+   const [yyyy, mm, dd] = parts;
+   return `${mm}-${dd}-${yyyy}`;
+}
 
 
 function renderTasks() {
@@ -163,15 +177,38 @@ function renderTasks() {
    const now = Date.now();
 
 
+   // migrate any old task formats (plain strings, or objects missing
+   // the newer fields) into the full shape before filtering/rendering
    myTasks.forEach((task, index) => {
-       // migrate old plain-string tasks into objects with a created date
        if (typeof task === 'string') {
-           task = { text: task, created: now };
-           myTasks[index] = task;
+           myTasks[index] = { text: task, created: now, priority: 'medium', deadline: null, completed: false };
+           return;
        }
        if (!task.created) task.created = now;
+       if (!task.priority) task.priority = 'medium';
+       if (task.deadline === undefined) task.deadline = null;
+       if (task.completed === undefined) task.completed = false;
+   });
 
 
+   const visibleTasks = myTasks
+       .map((task, index) => ({ task, index }))
+       .filter(({ task }) => {
+           if (todoViewMode === 'pending') return !task.completed;
+           if (todoViewMode === 'completed') return task.completed;
+           return true;
+       });
+
+
+   if (visibleTasks.length === 0) {
+       const emptyMsg = todoViewMode === 'completed' ? "nothing completed yet" : "nothing yet";
+       taskList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">${emptyMsg}</li>`;
+       renderHomeTodos();
+       return;
+   }
+
+
+   visibleTasks.forEach(({ task, index }) => {
        const li = document.createElement('li');
 
 
@@ -182,66 +219,124 @@ function renderTasks() {
        const checkbox = document.createElement('input');
        checkbox.type = 'checkbox';
        checkbox.className = 'task-checkbox';
+       checkbox.checked = task.completed;
        checkbox.addEventListener('change', () => {
            li.classList.add('task-complete');
            setTimeout(() => {
-               myTasks.splice(index, 1);
+               task.completed = checkbox.checked;
                localStorage.setItem('myTasks', JSON.stringify(myTasks));
                renderTasks();
            }, 220);
        });
 
 
+       const textWrap = document.createElement('div');
+       textWrap.className = 'task-text-wrap';
+
+
        const textSpan = document.createElement('span');
+       textSpan.className = 'task-text';
        textSpan.textContent = task.text;
+       if (task.completed) textSpan.style.textDecoration = 'line-through';
+       textWrap.appendChild(textSpan);
 
 
-       leftSide.appendChild(checkbox);
-       leftSide.appendChild(textSpan);
-       li.appendChild(leftSide);
-
-
-       const daysOverdue = Math.floor((now - task.created) / (1000 * 60 * 60 * 24));
-       if (daysOverdue > 0) {
-           const badge = document.createElement('span');
-           badge.className = 'overdue-badge';
-           badge.textContent = `(-${daysOverdue})`;
-           li.appendChild(badge);
+       if (task.deadline) {
+           const deadlineSpan = document.createElement('span');
+           deadlineSpan.className = 'task-deadline';
+           deadlineSpan.textContent = `due ${formatDeadlineDisplay(task.deadline)}`;
+           textWrap.appendChild(deadlineSpan);
        }
 
 
+       leftSide.appendChild(checkbox);
+       leftSide.appendChild(textWrap);
+       li.appendChild(leftSide);
+
+
+       const rightSide = document.createElement('div');
+       rightSide.className = 'task-right';
+
+
+       if (!task.completed) {
+           const daysOverdue = Math.floor((now - task.created) / (1000 * 60 * 60 * 24));
+           if (daysOverdue > 0) {
+               const badge = document.createElement('span');
+               badge.className = 'overdue-badge';
+               badge.textContent = `(-${daysOverdue})`;
+               rightSide.appendChild(badge);
+           }
+       }
+
+
+       const priorityBadge = document.createElement('span');
+       priorityBadge.className = `priority-badge priority-${task.priority}`;
+       priorityBadge.textContent = task.priority;
+       rightSide.appendChild(priorityBadge);
+
+
+       li.appendChild(rightSide);
        taskList.appendChild(li);
    });
+
+
    renderHomeTodos();
 }
 
 
-// mirrors the to-dos list into the homepage "to-dos" bubble
+// mirrors the pending to-dos into the homepage "to-dos" bubble
 function renderHomeTodos() {
    const homeTodoList = document.getElementById('homeTodoList');
    if (!homeTodoList) return;
    homeTodoList.innerHTML = "";
-   if (myTasks.length === 0) {
+
+
+   const pendingTasks = myTasks.filter(task => typeof task === 'string' || !task.completed);
+
+
+   if (pendingTasks.length === 0) {
        homeTodoList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing yet</li>`;
        return;
    }
-   myTasks.forEach(task => {
+   pendingTasks.forEach(task => {
        const li = document.createElement('li');
        li.textContent = typeof task === 'string' ? task : task.text;
        homeTodoList.appendChild(li);
    });
 }
+
+
 if (addBtn && taskInput) {
    addBtn.addEventListener('click', () => {
        const val = taskInput.value.trim();
        if (val !== "") {
-           myTasks.push({ text: val, created: Date.now() });
+           const priority = taskPrioritySelect ? taskPrioritySelect.value : 'medium';
+           const deadline = (taskDeadlineInput && taskDeadlineInput.value) ? taskDeadlineInput.value : null;
+           myTasks.push({ text: val, created: Date.now(), priority: priority, deadline: deadline, completed: false });
            localStorage.setItem('myTasks', JSON.stringify(myTasks));
            taskInput.value = "";
+           if (taskDeadlineInput) taskDeadlineInput.value = "";
            renderTasks();
        }
    });
 }
+
+
+if (todoViewToggle) {
+   todoViewToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
+       btn.classList.toggle('active', btn.getAttribute('data-view') === todoViewMode);
+       btn.addEventListener('click', () => {
+           todoViewMode = btn.getAttribute('data-view');
+           localStorage.setItem('myTodoViewMode', todoViewMode);
+           todoViewToggle.querySelectorAll('.view-toggle-btn').forEach(b => {
+               b.classList.toggle('active', b === btn);
+           });
+           renderTasks();
+       });
+   });
+}
+
+
 renderTasks();
 
 
@@ -825,7 +920,7 @@ function renderSubjectManageList() {
 
 
    if (studySubjects.length === 0) {
-       subjectManageList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">no subjects yet</li>`;
+       subjectManageList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">no activities yet</li>`;
        return;
    }
 
@@ -955,7 +1050,7 @@ if (logHoursBtn) {
    logHoursBtn.addEventListener('click', () => {
        if (!studyTimeInput || !subjectSelect) return;
        if (studySubjects.length === 0) {
-           alert("add a subject first.");
+           alert("add an activity first.");
            return;
        }
        const minutesValue = parseInt(studyTimeInput.value.trim());
@@ -963,11 +1058,11 @@ if (logHoursBtn) {
 
 
        if (!isNaN(minutesValue) && minutesValue > 0) {
-           studyLogs.push({ subject: selectedSubject, minutes: minutesValue });
+           studyLogs.push({ subject: selectedSubject, minutes: minutesValue, logged: Date.now() });
            localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
            studyTimeInput.value = "";
            renderStudyLogs();
-           if (studyViewMode === 'breakdown') renderBreakdownChart();
+           if (studyViewMode === 'breakdown') renderStudyBreakdownCharts();
        } else {
            alert("please enter a valid number of minutes.");
        }
@@ -981,14 +1076,17 @@ renderStudyLogs();
 
 
 // ==========================================
-// study time breakdown — circular, color-coded
-// view of logged minutes per subject
+// study time breakdown — two circular,
+// color-coded views of logged minutes per
+// activity: today, and this week (resets Monday)
 // ==========================================
 const studyViewToggle = document.getElementById('studyViewToggle');
 const studyLogView = document.getElementById('studyLogView');
 const studyBreakdownView = document.getElementById('studyBreakdownView');
-const breakdownChart = document.getElementById('breakdownChart');
-const breakdownLegend = document.getElementById('breakdownLegend');
+const breakdownChartDay = document.getElementById('breakdownChartDay');
+const breakdownLegendDay = document.getElementById('breakdownLegendDay');
+const breakdownChartWeek = document.getElementById('breakdownChartWeek');
+const breakdownLegendWeek = document.getElementById('breakdownLegendWeek');
 
 
 let studyViewMode = 'log';
@@ -997,15 +1095,14 @@ let studyViewMode = 'log';
 const breakdownPalette = ['#e07a5f', '#4a7c59', '#f4a261', '#8c7e70', '#6b8fb5', '#b56b8f', '#9c8f5c', '#5c9c9c', '#b58f6b', '#7a5fe0'];
 
 
-function renderBreakdownChart() {
-   if (!breakdownChart || !breakdownLegend) return;
-   breakdownChart.innerHTML = "";
-   breakdownLegend.innerHTML = "";
+function renderDonutChart(chartEl, legendEl, logsInRange) {
+   if (!chartEl || !legendEl) return;
+   chartEl.innerHTML = "";
+   legendEl.innerHTML = "";
 
 
    const totals = {};
-   studySubjects.forEach(s => totals[s] = 0);
-   studyLogs.forEach(log => {
+   logsInRange.forEach(log => {
        if (totals[log.subject] === undefined) totals[log.subject] = 0;
        totals[log.subject] += parseInt(log.minutes) || 0;
    });
@@ -1016,11 +1113,11 @@ function renderBreakdownChart() {
 
 
    if (grandTotal === 0) {
-       breakdownChart.style.background = "#ebdccb";
+       chartEl.style.background = "#ebdccb";
        const emptyMsg = document.createElement('li');
        emptyMsg.className = "breakdown-legend-item";
-       emptyMsg.textContent = "no study time logged yet";
-       breakdownLegend.appendChild(emptyMsg);
+       emptyMsg.textContent = "no time logged yet";
+       legendEl.appendChild(emptyMsg);
        return;
    }
 
@@ -1047,15 +1144,34 @@ function renderBreakdownChart() {
 
 
        const label = document.createElement('span');
-       label.textContent = `${subject} — ${formatMinutesToHours(mins)} (${Math.round(percent)}%)`;
+       label.textContent = `${subject} — ${Math.round(percent)}%, ${formatMinutesToHours(mins)}`;
        li.appendChild(label);
 
 
-       breakdownLegend.appendChild(li);
+       legendEl.appendChild(li);
    });
 
 
-   breakdownChart.style.background = `conic-gradient(${gradientParts.join(', ')})`;
+   chartEl.style.background = `conic-gradient(${gradientParts.join(', ')})`;
+}
+
+
+function renderStudyBreakdownCharts() {
+   const now = new Date();
+   const todayKey = dateKeyFor(now);
+
+
+   const monday = getMondayOf(now);
+   monday.setHours(0, 0, 0, 0);
+   const mondayTimestamp = monday.getTime();
+
+
+   const todaysLogs = studyLogs.filter(log => log.logged && dateKeyFor(new Date(log.logged)) === todayKey);
+   const weeksLogs = studyLogs.filter(log => log.logged && log.logged >= mondayTimestamp);
+
+
+   renderDonutChart(breakdownChartDay, breakdownLegendDay, todaysLogs);
+   renderDonutChart(breakdownChartWeek, breakdownLegendWeek, weeksLogs);
 }
 
 
@@ -1068,7 +1184,7 @@ if (studyViewToggle) {
            });
            if (studyLogView) studyLogView.classList.toggle('view-hidden', studyViewMode !== 'log');
            if (studyBreakdownView) studyBreakdownView.classList.toggle('view-hidden', studyViewMode !== 'breakdown');
-           if (studyViewMode === 'breakdown') renderBreakdownChart();
+           if (studyViewMode === 'breakdown') renderStudyBreakdownCharts();
        });
    });
 }
@@ -1135,33 +1251,88 @@ if (resetTimerBtn) {
 
 
 // ==========================================
-// brain dump automated disk tracking logic
+// brain dump post system — compose a thought,
+// post it, and it shows up as a timestamped
+// card below, deletable via the x in the corner
 // ==========================================
 const brainDumpArea = document.getElementById('brainDumpArea');
-const saveStatus = document.getElementById('saveStatus');
-const clearDumpBtn = document.getElementById('clearDumpBtn');
-let autoSaveDebounceTimeout;
+const postDumpBtn = document.getElementById('postDumpBtn');
+const dumpPostsList = document.getElementById('dumpPostsList');
 
 
-if (brainDumpArea) {
-   brainDumpArea.value = localStorage.getItem('myBrainDump') || "";
-   brainDumpArea.addEventListener('input', () => {
-       if (saveStatus) saveStatus.textContent = "typing...";
-       clearTimeout(autoSaveDebounceTimeout);
-       autoSaveDebounceTimeout = setTimeout(() => {
-           localStorage.setItem('myBrainDump', brainDumpArea.value);
-           if (saveStatus) saveStatus.textContent = "saved";
-       }, 1000);
+let dumpPosts = JSON.parse(localStorage.getItem('myDumpPosts')) || [];
+
+
+function formatDumpTimestamp(ts) {
+   const d = new Date(ts);
+   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+   let hours = d.getHours();
+   const minutes = d.getMinutes().toString().padStart(2, '0');
+   const ampm = hours >= 12 ? 'PM' : 'AM';
+   hours = hours % 12;
+   if (hours === 0) hours = 12;
+   return `${months[d.getMonth()]} ${d.getDate()}, ${hours}:${minutes} ${ampm}`;
+}
+
+
+function renderDumpPosts() {
+   if (!dumpPostsList) return;
+   dumpPostsList.innerHTML = "";
+
+
+   if (dumpPosts.length === 0) {
+       dumpPostsList.innerHTML = `<div style="color:#aaa; text-align:center; padding: 15px 0; font-size: 13px;">nothing posted yet</div>`;
+       return;
+   }
+
+
+   dumpPosts.slice().reverse().forEach(post => {
+       const actualIndex = dumpPosts.indexOf(post);
+
+
+       const card = document.createElement('div');
+       card.className = "dump-post-card";
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'dump-post-delete';
+       delBtn.addEventListener('click', () => {
+           dumpPosts.splice(actualIndex, 1);
+           localStorage.setItem('myDumpPosts', JSON.stringify(dumpPosts));
+           renderDumpPosts();
+       });
+       card.appendChild(delBtn);
+
+
+       const textDiv = document.createElement('div');
+       textDiv.className = "dump-post-text";
+       textDiv.textContent = post.text;
+       card.appendChild(textDiv);
+
+
+       const timeDiv = document.createElement('div');
+       timeDiv.className = "dump-post-timestamp";
+       timeDiv.textContent = formatDumpTimestamp(post.timestamp);
+       card.appendChild(timeDiv);
+
+
+       dumpPostsList.appendChild(card);
    });
 }
 
 
-if (clearDumpBtn && brainDumpArea) {
-   clearDumpBtn.addEventListener('click', () => {
-       if (confirm("clear thoughts?")) {
+if (postDumpBtn && brainDumpArea) {
+   postDumpBtn.addEventListener('click', () => {
+       const text = brainDumpArea.value.trim();
+       if (text !== "") {
+           dumpPosts.push({ text: text, timestamp: Date.now() });
+           localStorage.setItem('myDumpPosts', JSON.stringify(dumpPosts));
            brainDumpArea.value = "";
-           localStorage.setItem('myBrainDump', "");
-           if (saveStatus) saveStatus.textContent = "saved";
+           renderDumpPosts();
        }
    });
 }
+
+
+renderDumpPosts();
