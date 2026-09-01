@@ -171,6 +171,16 @@ function formatDeadlineDisplay(dateStr) {
 }
 
 
+// counts full calendar days between two dates (ignoring time of day),
+// so a task added yesterday evening reads as "1 day old" today,
+// not "0 days old" until a full 24 hours has passed
+function calendarDaysBetween(earlier, later) {
+   const earlierMidnight = new Date(earlier.getFullYear(), earlier.getMonth(), earlier.getDate());
+   const laterMidnight = new Date(later.getFullYear(), later.getMonth(), later.getDate());
+   return Math.round((laterMidnight - earlierMidnight) / (1000 * 60 * 60 * 24));
+}
+
+
 function renderTasks() {
    if (!taskList) return;
    taskList.innerHTML = "";
@@ -259,7 +269,7 @@ function renderTasks() {
 
 
        if (!task.completed) {
-           const daysOverdue = Math.floor((now - task.created) / (1000 * 60 * 60 * 24));
+           const daysOverdue = calendarDaysBetween(new Date(task.created), new Date(now));
            if (daysOverdue > 0) {
                const badge = document.createElement('span');
                badge.className = 'overdue-badge';
