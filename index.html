@@ -104,7 +104,24 @@
                  <input type="text" id="habitInput" placeholder="new habit">
                  <button id="addHabitBtn">add</button>
              </div>
-             <ul id="habitList"></ul>
+
+             <div class="view-toggle" id="habitViewToggle">
+                 <button class="view-toggle-btn active" data-view="list">list</button>
+                 <button class="view-toggle-btn" data-view="chart">chart</button>
+             </div>
+
+             <div id="habitListView">
+                 <ul id="habitList"></ul>
+             </div>
+
+             <div id="habitChartView" class="view-hidden">
+                 <div class="habit-chart-card">
+                     <div class="input-area" style="margin-bottom: 14px;">
+                         <select id="habitChartSelect"></select>
+                     </div>
+                     <div id="habitChartContainer"></div>
+                 </div>
+             </div>
          </div>
 
 
@@ -142,29 +159,37 @@
 
          <div id="study-page" class="tab-content">
              <h1>study</h1>
-          
-             <div class="timer-card">
-                 <div class="timer-presets">
-                     <button class="timer-preset-btn" onclick="setTimer(5)">5m</button>
-                     <button class="timer-preset-btn" onclick="setTimer(15)">15m</button>
-                     <button class="timer-preset-btn" onclick="setTimer(25)">25m</button>
-                 </div>
-                 <div id="timerDisplay">25:00</div>
-                 <div class="timer-controls">
-                     <button id="startStopBtn">start</button>
-                     <button id="resetTimerBtn">reset</button>
+
+             <div class="today-breakdown-card">
+                 <h3 style="color: #e07a5f; margin-bottom: 12px;">today</h3>
+                 <div class="breakdown-container compact">
+                     <div class="breakdown-chart" id="breakdownChartDay"></div>
+                     <ul class="breakdown-legend" id="breakdownLegendDay"></ul>
                  </div>
              </div>
 
 
              <div class="view-toggle" id="studyViewToggle">
-                 <button class="view-toggle-btn active" data-view="log">log</button>
+                 <button class="view-toggle-btn active" data-view="track">track</button>
+                 <button class="view-toggle-btn" data-view="timer">timer</button>
+                 <button class="view-toggle-btn" data-view="activities">activities</button>
                  <button class="view-toggle-btn" data-view="breakdown">breakdown</button>
              </div>
 
 
-             <div id="studyLogView">
-                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">log study hours</h3>
+             <div id="studyTrackView">
+                 <div class="tracker-card">
+                     <h3 style="color: #e07a5f; margin-bottom: 12px;">track time</h3>
+                     <div class="input-area" style="margin-bottom: 14px;">
+                         <select id="trackerSubjectSelect"></select>
+                         <button id="trackerStartStopBtn">start</button>
+                     </div>
+                     <div id="trackerElapsedDisplay" class="tracker-elapsed">00:00:00</div>
+                     <div id="trackerActiveLabel" class="tracker-active-label"></div>
+                 </div>
+
+
+                 <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">log manually</h3>
                  <div class="study-log-form" style="margin-bottom: 25px;">
                      <div class="input-area" style="margin-bottom: 10px; gap: 8px;">
                          <select id="subjectSelect" style="flex: 1; padding: 12px; background-color: #faf9f6; border: 2px solid #e1ded7; border-radius: 8px; color: #4a4a4a;"></select>
@@ -174,9 +199,27 @@
                  </div>
                
                  <div id="studyHoursList" style="margin-bottom: 25px;"></div>
+             </div>
 
 
-                 <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">activities</h3>
+             <div id="studyTimerView" class="view-hidden">
+                 <div class="timer-card">
+                     <div class="timer-presets">
+                         <button class="timer-preset-btn" onclick="setTimer(5)">5m</button>
+                         <button class="timer-preset-btn" onclick="setTimer(15)">15m</button>
+                         <button class="timer-preset-btn" onclick="setTimer(25)">25m</button>
+                     </div>
+                     <div id="timerDisplay">25:00</div>
+                     <div class="timer-controls">
+                         <button id="startStopBtn">start</button>
+                         <button id="resetTimerBtn">reset</button>
+                     </div>
+                 </div>
+             </div>
+
+
+             <div id="studyActivitiesView" class="view-hidden">
+                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">activities</h3>
                  <div class="input-area" style="margin-bottom: 8px;">
                      <input type="text" id="newSubjectInput" placeholder="add an activity">
                      <button id="addSubjectBtn">add</button>
@@ -186,13 +229,7 @@
 
 
              <div id="studyBreakdownView" class="view-hidden">
-                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">today</h3>
-                 <div class="breakdown-container">
-                     <div class="breakdown-chart" id="breakdownChartDay"></div>
-                     <ul class="breakdown-legend" id="breakdownLegendDay"></ul>
-                 </div>
-
-                 <h3 style="margin-top: 30px; margin-bottom: 10px; color: #e07a5f;">this week</h3>
+                 <h3 style="margin-top: 15px; margin-bottom: 10px; color: #e07a5f;">this week</h3>
                  <div class="breakdown-container">
                      <div class="breakdown-chart" id="breakdownChartWeek"></div>
                      <ul class="breakdown-legend" id="breakdownLegendWeek"></ul>
