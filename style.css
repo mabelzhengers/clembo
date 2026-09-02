@@ -1650,7 +1650,10 @@ body.dark-mode .breakdown-legend-item {
 #addCalendarEventBtn,
 #addMaagEventBtn,
 #saveUsernameBtn,
-#addExamBtn {
+#addExamBtn,
+#addDietFoodBtn,
+#saveGymMuscleGroupBtn,
+#addGymExerciseBtn {
  background-color: #4a7c59 !important; /* Fresh leaf green */
  color: #ffffff !important;            /* Crisp white text */
  border: none !important;
@@ -1667,7 +1670,10 @@ body.dark-mode .breakdown-legend-item {
 #addCalendarEventBtn:hover,
 #addMaagEventBtn:hover,
 #saveUsernameBtn:hover,
-#addExamBtn:hover {
+#addExamBtn:hover,
+#addDietFoodBtn:hover,
+#saveGymMuscleGroupBtn:hover,
+#addGymExerciseBtn:hover {
  background-color: #3b6346 !important; /* Slightly deeper green on hover */
 }
 
@@ -1680,7 +1686,10 @@ body.dark-mode #addSubjectBtn,
 body.dark-mode #addCalendarEventBtn,
 body.dark-mode #addMaagEventBtn,
 body.dark-mode #saveUsernameBtn,
-body.dark-mode #addExamBtn {
+body.dark-mode #addExamBtn,
+body.dark-mode #addDietFoodBtn,
+body.dark-mode #saveGymMuscleGroupBtn,
+body.dark-mode #addGymExerciseBtn {
  background-color: #5c9c6f !important; /* Softer, glowing leaf green for dark mode */
  color: #ffffff !important;
 }
@@ -1694,6 +1703,533 @@ body.dark-mode #addSubjectBtn:hover,
 body.dark-mode #addCalendarEventBtn:hover,
 body.dark-mode #addMaagEventBtn:hover,
 body.dark-mode #saveUsernameBtn:hover,
-body.dark-mode #addExamBtn:hover {
+body.dark-mode #addExamBtn:hover,
+body.dark-mode #addDietFoodBtn:hover,
+body.dark-mode #saveGymMuscleGroupBtn:hover,
+body.dark-mode #addGymExerciseBtn:hover {
  background-color: #4a7c59 !important; /* Darker green on hover in dark mode */
+}
+
+
+/* ==========================================
+  SHARED MODAL (day events / gym day editor)
+  ========================================== */
+.modal-overlay {
+ position: fixed;
+ top: 0;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ background: rgba(32, 27, 23, 0.45);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ z-index: 1000;
+ padding: 20px;
+}
+
+
+.modal-box {
+ background: #fdfaf6;
+ border-radius: 16px;
+ padding: 28px;
+ max-width: 420px;
+ width: 100%;
+ max-height: 80vh;
+ overflow-y: auto;
+ position: relative;
+ box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+
+body.dark-mode .modal-box {
+ background: #201b17;
+}
+
+
+.modal-close {
+ position: absolute;
+ top: 14px;
+ right: 14px;
+ background: none !important;
+ border: none !important;
+ color: #e07a5f !important;
+ font-size: 15px;
+ cursor: pointer;
+ padding: 2px 8px !important;
+}
+
+
+.modal-title {
+ color: #e07a5f;
+ font-size: 19px;
+ font-weight: 800;
+ margin-bottom: 18px;
+ padding-right: 28px;
+ text-transform: lowercase;
+}
+
+
+.modal-list {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+}
+
+
+.modal-list li {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 8px;
+ padding: 12px 14px;
+ font-size: 14px;
+ word-break: break-word;
+}
+
+
+body.dark-mode .modal-list li {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+/* ==========================================
+  WEEK VIEW: COLUMNS VS ROWS LAYOUT
+  ========================================== */
+.day-column,
+.maag-day-box {
+ cursor: pointer;
+ transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+
+.day-column:hover,
+.maag-day-box:hover {
+ border-color: #f4a261;
+}
+
+
+#weekViewRows {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ margin-top: 20px;
+ width: 100%;
+}
+
+
+.week-row-day {
+ display: flex;
+ align-items: center;
+ gap: 16px;
+ background-color: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 10px;
+ padding: 14px 16px;
+ cursor: pointer;
+ transition: border-color 0.2s ease;
+}
+
+
+.week-row-day:hover {
+ border-color: #f4a261;
+}
+
+
+.week-row-day.today-highlight {
+ border-color: #4a7c59;
+ border-width: 3px;
+ box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2);
+}
+
+
+body.dark-mode .week-row-day {
+ background-color: #2e2520;
+ border-color: #42352e;
+}
+
+
+body.dark-mode .week-row-day.today-highlight {
+ border-color: #5c9c6f;
+ box-shadow: 0 0 0 3px rgba(92, 156, 111, 0.25);
+}
+
+
+.week-row-day-label {
+ flex: none;
+ width: 64px;
+ text-align: center;
+}
+
+
+.week-row-day-name {
+ font-size: 14px;
+ font-weight: 800;
+ text-transform: lowercase;
+ color: #e07a5f;
+}
+
+
+.week-row-day-date {
+ font-size: 12px;
+ font-weight: 700;
+ color: #a68f7b;
+}
+
+
+body.dark-mode .week-row-day-date {
+ color: #bcae9e;
+}
+
+
+.week-row-events {
+ flex: 1;
+ display: flex;
+ flex-wrap: wrap;
+ gap: 6px;
+ min-width: 0;
+}
+
+
+.week-row-event-pill {
+ background: #ffffff;
+ border: 1px solid #ebdccb;
+ border-radius: 20px;
+ padding: 4px 12px;
+ font-size: 12px;
+ color: #4e443c;
+ white-space: nowrap;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ max-width: 200px;
+}
+
+
+body.dark-mode .week-row-event-pill {
+ background: #201b17;
+ border-color: #42352e;
+ color: #f7eade;
+}
+
+
+.week-row-empty {
+ font-size: 12px;
+ color: #b5aca0;
+}
+
+
+body.dark-mode .week-row-empty {
+ color: #6a5d51;
+}
+
+
+/* ==========================================
+  HEALTH: DIET PROGRESS & WATER COUNTER
+  ========================================== */
+.diet-progress-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 12px;
+ padding: 18px;
+ margin-bottom: 20px;
+}
+
+
+body.dark-mode .diet-progress-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.diet-progress-label {
+ font-size: 13px;
+ font-weight: 700;
+ color: #8c7e70;
+ text-transform: lowercase;
+ margin-bottom: 10px;
+}
+
+
+body.dark-mode .diet-progress-label {
+ color: #bcae9e;
+}
+
+
+.diet-progress-track {
+ width: 100%;
+ height: 14px;
+ background: #ebdccb;
+ border-radius: 20px;
+ overflow: hidden;
+}
+
+
+body.dark-mode .diet-progress-track {
+ background: #42352e;
+}
+
+
+.diet-progress-fill {
+ height: 100%;
+ width: 0%;
+ background-color: #4a7c59;
+ border-radius: 20px;
+ transition: width 0.3s ease;
+}
+
+
+body.dark-mode .diet-progress-fill {
+ background-color: #5c9c6f;
+}
+
+
+.water-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 16px;
+ padding: 24px;
+ text-align: center;
+ max-width: 360px;
+ margin: 0 auto 25px;
+}
+
+
+body.dark-mode .water-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.water-counter-row {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 24px;
+ margin: 10px 0;
+}
+
+
+.water-btn {
+ width: 42px;
+ height: 42px;
+ border-radius: 50%;
+ background-color: #e07a5f !important;
+ color: #ffffff !important;
+ border: none !important;
+ font-size: 20px;
+ font-weight: 800;
+ padding: 0 !important;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ cursor: pointer;
+ transition: background-color 0.2s ease;
+}
+
+
+.water-btn:hover {
+ background-color: #cb654b !important;
+}
+
+
+body.dark-mode .water-btn {
+ background-color: #e07a5f !important;
+}
+
+
+body.dark-mode .water-btn:hover {
+ background-color: #cb654b !important;
+}
+
+
+.water-count-value {
+ font-size: 40px;
+ font-weight: 800;
+ color: #e07a5f;
+ font-family: monospace;
+ min-width: 60px;
+}
+
+
+body.dark-mode .water-count-value {
+ color: #f4a261;
+}
+
+
+.water-counter-caption {
+ font-size: 12px;
+ color: #a68f7b;
+ text-transform: lowercase;
+}
+
+
+body.dark-mode .water-counter-caption {
+ color: #bcae9e;
+}
+
+
+/* ==========================================
+  HEALTH: GYM WEEKLY SPLIT & STREAK
+  ========================================== */
+.gym-split-grid {
+ display: flex;
+ gap: 10px;
+ flex-wrap: wrap;
+ align-items: stretch;
+}
+
+
+.gym-day-card {
+ flex: 1;
+ min-width: 110px;
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 12px;
+ padding: 14px 10px;
+ text-align: center;
+ cursor: pointer;
+ transition: all 0.2s ease;
+}
+
+
+.gym-day-card:hover {
+ border-color: #f4a261;
+ transform: translateY(-2px);
+}
+
+
+.gym-day-card.gym-today {
+ flex: 2.2;
+ min-width: 160px;
+ padding: 22px 16px;
+ border-color: #4a7c59;
+ border-width: 3px;
+ box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.2);
+}
+
+
+body.dark-mode .gym-day-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+body.dark-mode .gym-day-card.gym-today {
+ border-color: #5c9c6f;
+ box-shadow: 0 0 0 3px rgba(92, 156, 111, 0.25);
+}
+
+
+.gym-day-name {
+ font-size: 12px;
+ font-weight: 800;
+ text-transform: lowercase;
+ color: #e07a5f;
+ margin-bottom: 6px;
+}
+
+
+.gym-day-card.gym-today .gym-day-name {
+ font-size: 15px;
+}
+
+
+.gym-day-muscle {
+ font-size: 13px;
+ font-weight: 700;
+ color: #4e443c;
+ text-transform: lowercase;
+ word-break: break-word;
+}
+
+
+body.dark-mode .gym-day-muscle {
+ color: #f7eade;
+}
+
+
+.gym-day-card.gym-today .gym-day-muscle {
+ font-size: 17px;
+}
+
+
+.gym-day-muscle.gym-day-unset {
+ color: #b5aca0;
+}
+
+
+body.dark-mode .gym-day-muscle.gym-day-unset {
+ color: #6a5d51;
+}
+
+
+.gym-day-exercise-count {
+ font-size: 11px;
+ color: #a68f7b;
+ margin-top: 6px;
+}
+
+
+body.dark-mode .gym-day-exercise-count {
+ color: #bcae9e;
+}
+
+
+.gym-streak-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 16px;
+ padding: 22px;
+ max-width: 340px;
+ margin: 0 auto;
+ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+
+body.dark-mode .gym-streak-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.gym-streak-label {
+ text-align: center;
+ font-size: 16px;
+ font-weight: 800;
+ color: #e07a5f;
+ text-transform: lowercase;
+ margin-bottom: 14px;
+}
+
+
+body.dark-mode .gym-streak-label {
+ color: #f4a261;
+}
+
+
+.mini-calendar-day.gym-attended {
+ background-color: #4a7c59;
+ color: #ffffff !important;
+ font-weight: 800;
+}
+
+
+body.dark-mode .mini-calendar-day.gym-attended {
+ background-color: #5c9c6f;
+}
+
+
+.mini-calendar-day.gym-today-ring {
+ box-shadow: inset 0 0 0 2px #e07a5f;
+}
+
+
+body.dark-mode .mini-calendar-day.gym-today-ring {
+ box-shadow: inset 0 0 0 2px #f4a261;
+}
+
+
+#gymMiniCalendar .mini-calendar-day {
+ cursor: pointer;
+ transition: background-color 0.15s ease;
 }
