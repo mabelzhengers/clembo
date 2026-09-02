@@ -352,13 +352,23 @@ renderTasks();
 
 // ==========================================
 // habits workspace tracker with streak counter
+// each habit keeps a history of {t, s} points
+// (timestamp, streak value at that point) every
+// time it's bumped, so its growth can be plotted
+// as a line chart alongside the plain list view.
 // ==========================================
 const habitInput = document.getElementById('habitInput');
 const addHabitBtn = document.getElementById('addHabitBtn');
 const habitList = document.getElementById('habitList');
+const habitViewToggle = document.getElementById('habitViewToggle');
+const habitListView = document.getElementById('habitListView');
+const habitChartView = document.getElementById('habitChartView');
+const habitChartSelect = document.getElementById('habitChartSelect');
+const habitChartContainer = document.getElementById('habitChartContainer');
 
 
 let myHabits = JSON.parse(localStorage.getItem('myHabits')) || [];
+let habitViewMode = 'list';
 
 
 function renderHabits() {
@@ -366,8 +376,11 @@ function renderHabits() {
    habitList.innerHTML = "";
    myHabits.forEach((habit, index) => {
        if (typeof habit === 'string') {
-           habit = { name: habit, streak: 0 };
+           habit = { name: habit, streak: 0, history: [{ t: Date.now(), s: 0 }] };
            myHabits[index] = habit;
+       }
+       if (!habit.history || habit.history.length === 0) {
+           habit.history = [{ t: Date.now(), s: habit.streak || 0 }];
        }
 
 
@@ -389,6 +402,7 @@ function renderHabits() {
        plusBtn.style.fontSize = "12px";
        plusBtn.addEventListener('click', () => {
            habit.streak++;
+           habit.history.push({ t: Date.now(), s: habit.streak });
            localStorage.setItem('myHabits', JSON.stringify(myHabits));
            renderHabits();
        });
@@ -409,6 +423,8 @@ function renderHabits() {
        habitList.appendChild(li);
    });
    renderHomeHabits();
+   renderHabitChartSelect();
+   renderHabitChart();
 }
 
 
@@ -434,13 +450,144 @@ if (addHabitBtn && habitInput) {
    addHabitBtn.addEventListener('click', () => {
        const val = habitInput.value.trim();
        if (val !== "") {
-           myHabits.push({ name: val, streak: 0 });
+           myHabits.push({ name: val, streak: 0, history: [{ t: Date.now(), s: 0 }] });
            localStorage.setItem('myHabits', JSON.stringify(myHabits));
            habitInput.value = "";
            renderHabits();
        }
    });
 }
+
+
+// ==========================================
+// habit line chart — pick a habit from the
+// dropdown and see its streak growth over time
+// ==========================================
+const habitChartMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+
+function formatHabitChartDate(ts) {
+   const d = new Date(ts);
+   return `${habitChartMonths[d.getMonth()]} ${d.getDate()}`;
+}
+
+
+function renderHabitChartSelect() {
+   if (!habitChartSelect) return;
+   const previousValue = habitChartSelect.value;
+   habitChartSelect.innerHTML = "";
+   myHabits.forEach(habit => {
+       const name = typeof habit === 'string' ? habit : habit.name;
+       const option = document.createElement('option');
+       option.value = name;
+       option.textContent = name;
+       habitChartSelect.appendChild(option);
+   });
+   const names = myHabits.map(h => (typeof h === 'string' ? h : h.name));
+   if (names.includes(previousValue)) {
+       habitChartSelect.value = previousValue;
+   }
+}
+
+
+function renderHabitChart() {
+   if (!habitChartContainer) return;
+   habitChartContainer.innerHTML = "";
+
+
+   if (myHabits.length === 0) {
+       habitChartContainer.innerHTML = `<div style="color:#aaa; text-align:center; padding: 40px 10px; font-size: 14px;">no habits yet</div>`;
+       return;
+   }
+
+
+   const firstName = typeof myHabits[0] === 'string' ? myHabits[0] : myHabits[0].name;
+   const selectedName = (habitChartSelect && habitChartSelect.value) ? habitChartSelect.value : firstName;
+   let habit = myHabits.find(h => (typeof h === 'string' ? h : h.name) === selectedName);
+   if (!habit) habit = myHabits[0];
+   if (typeof habit === 'string') habit = { name: habit, streak: 0, history: [] };
+
+
+   const history = (habit.history && habit.history.length > 0) ? habit.history : [{ t: Date.now(), s: habit.streak || 0 }];
+
+
+   const titleDiv = document.createElement('div');
+   titleDiv.className = "habit-chart-title";
+   titleDiv.textContent = `${habit.name} — ${habit.streak} day streak`;
+   habitChartContainer.appendChild(titleDiv);
+
+
+   const width = 600, height = 220;
+   const padLeft = 34, padRight = 16, padTop = 16, padBottom = 30;
+
+
+   const times = history.map(p => p.t);
+   const streaks = history.map(p => p.s);
+   const minT = Math.min(...times);
+   const maxT = Math.max(...times);
+   const maxS = Math.max(1, Math.max(...streaks));
+
+
+   function xFor(t) {
+       if (maxT === minT) return (padLeft + (width - padRight)) / 2;
+       return padLeft + ((t - minT) / (maxT - minT)) * (width - padLeft - padRight);
+   }
+   function yFor(s) {
+       return (height - padBottom) - (s / maxS) * (height - padTop - padBottom);
+   }
+
+
+   const pointsStr = history.map(p => `${xFor(p.t).toFixed(1)},${yFor(p.s).toFixed(1)}`).join(' ');
+   const baselineY = height - padBottom;
+
+
+   let dotsMarkup = "";
+   history.forEach(p => {
+       dotsMarkup += `<circle cx="${xFor(p.t).toFixed(1)}" cy="${yFor(p.s).toFixed(1)}" r="4" class="habit-chart-dot"><title>${formatHabitChartDate(p.t)}: ${p.s} days</title></circle>`;
+   });
+
+
+   const svgMarkup = `
+       <svg viewBox="0 0 ${width} ${height}" class="habit-chart-svg" xmlns="http://www.w3.org/2000/svg">
+           <line x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${baselineY}" class="habit-chart-axis" />
+           <line x1="${padLeft}" y1="${baselineY}" x2="${width - padRight}" y2="${baselineY}" class="habit-chart-axis" />
+           ${history.length > 1 ? `<polyline points="${pointsStr}" class="habit-chart-line" />` : ''}
+           ${dotsMarkup}
+           <text x="4" y="${padTop + 4}" class="habit-chart-axis-label">${maxS}</text>
+           <text x="4" y="${baselineY + 4}" class="habit-chart-axis-label">0</text>
+           <text x="${padLeft}" y="${height - 6}" class="habit-chart-axis-label">${formatHabitChartDate(minT)}</text>
+           <text x="${width - padRight}" y="${height - 6}" class="habit-chart-axis-label" text-anchor="end">${formatHabitChartDate(maxT)}</text>
+       </svg>
+   `;
+
+
+   const svgWrap = document.createElement('div');
+   svgWrap.className = "habit-chart-svg-wrap";
+   svgWrap.innerHTML = svgMarkup;
+   habitChartContainer.appendChild(svgWrap);
+}
+
+
+if (habitChartSelect) {
+   habitChartSelect.addEventListener('change', renderHabitChart);
+}
+
+
+if (habitViewToggle) {
+   habitViewToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
+       btn.addEventListener('click', () => {
+           habitViewMode = btn.getAttribute('data-view');
+           habitViewToggle.querySelectorAll('.view-toggle-btn').forEach(b => {
+               b.classList.toggle('active', b === btn);
+           });
+           if (habitListView) habitListView.classList.toggle('view-hidden', habitViewMode !== 'list');
+           if (habitChartView) habitChartView.classList.toggle('view-hidden', habitViewMode !== 'chart');
+           if (habitViewMode === 'chart') renderHabitChart();
+       });
+   });
+}
+
+
 renderHabits();
 
 
@@ -885,6 +1032,7 @@ const studyHoursList = document.getElementById('studyHoursList');
 const newSubjectInput = document.getElementById('newSubjectInput');
 const addSubjectBtn = document.getElementById('addSubjectBtn');
 const subjectManageList = document.getElementById('subjectManageList');
+const trackerSubjectSelect = document.getElementById('trackerSubjectSelect');
 
 
 // one-time migration from the old fixed cat1/cat2/cat3 setup, if present
@@ -924,6 +1072,24 @@ function renderSubjectSelect() {
 }
 
 
+function renderTrackerSubjectSelect() {
+   if (!trackerSubjectSelect) return;
+   const previousValue = trackerSubjectSelect.value;
+   trackerSubjectSelect.innerHTML = "";
+   studySubjects.forEach(subject => {
+       const option = document.createElement('option');
+       option.value = subject;
+       option.textContent = subject;
+       trackerSubjectSelect.appendChild(option);
+   });
+   if (activeTracking) {
+       trackerSubjectSelect.value = activeTracking.subject;
+   } else if (studySubjects.includes(previousValue)) {
+       trackerSubjectSelect.value = previousValue;
+   }
+}
+
+
 function renderSubjectManageList() {
    if (!subjectManageList) return;
    subjectManageList.innerHTML = "";
@@ -950,6 +1116,7 @@ function renderSubjectManageList() {
            localStorage.setItem('myStudySubjects', JSON.stringify(studySubjects));
            renderSubjectManageList();
            renderSubjectSelect();
+           renderTrackerSubjectSelect();
            renderStudyLogs();
        });
        li.appendChild(delBtn);
@@ -967,6 +1134,7 @@ if (addSubjectBtn && newSubjectInput) {
            newSubjectInput.value = "";
            renderSubjectManageList();
            renderSubjectSelect();
+           renderTrackerSubjectSelect();
        }
    });
 }
@@ -987,9 +1155,11 @@ function renderStudyLogs() {
    studyHoursList.innerHTML = "";
 
 
+   const todayKey = dateKeyFor(new Date());
    const totals = {};
    studySubjects.forEach(s => totals[s] = 0);
    studyLogs.forEach(log => {
+       if (!log.logged || dateKeyFor(new Date(log.logged)) !== todayKey) return;
        if (totals[log.subject] === undefined) totals[log.subject] = 0;
        totals[log.subject] += parseInt(log.minutes) || 0;
    });
@@ -1001,7 +1171,7 @@ function renderStudyLogs() {
 
    const summaryTitle = document.createElement('div');
    summaryTitle.className = "summary-title";
-   summaryTitle.textContent = "total study breakdown";
+   summaryTitle.textContent = "today's totals";
    summaryBox.appendChild(summaryTitle);
 
 
@@ -1072,7 +1242,7 @@ if (logHoursBtn) {
            localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
            studyTimeInput.value = "";
            renderStudyLogs();
-           if (studyViewMode === 'breakdown') renderStudyBreakdownCharts();
+           renderStudyBreakdownCharts();
        } else {
            alert("please enter a valid number of minutes.");
        }
@@ -1088,10 +1258,13 @@ renderStudyLogs();
 // ==========================================
 // study time breakdown — two circular,
 // color-coded views of logged minutes per
-// activity: today, and this week (resets Monday)
+// activity: today (always visible up top),
+// and this week (resets Monday, in its own view)
 // ==========================================
 const studyViewToggle = document.getElementById('studyViewToggle');
-const studyLogView = document.getElementById('studyLogView');
+const studyTrackView = document.getElementById('studyTrackView');
+const studyTimerView = document.getElementById('studyTimerView');
+const studyActivitiesView = document.getElementById('studyActivitiesView');
 const studyBreakdownView = document.getElementById('studyBreakdownView');
 const breakdownChartDay = document.getElementById('breakdownChartDay');
 const breakdownLegendDay = document.getElementById('breakdownLegendDay');
@@ -1099,7 +1272,7 @@ const breakdownChartWeek = document.getElementById('breakdownChartWeek');
 const breakdownLegendWeek = document.getElementById('breakdownLegendWeek');
 
 
-let studyViewMode = 'log';
+let studyViewMode = 'track';
 
 
 const breakdownPalette = ['#e07a5f', '#4a7c59', '#f4a261', '#8c7e70', '#6b8fb5', '#b56b8f', '#9c8f5c', '#5c9c9c', '#b58f6b', '#7a5fe0'];
@@ -1183,6 +1356,7 @@ function renderStudyBreakdownCharts() {
    renderDonutChart(breakdownChartDay, breakdownLegendDay, todaysLogs);
    renderDonutChart(breakdownChartWeek, breakdownLegendWeek, weeksLogs);
 }
+renderStudyBreakdownCharts();
 
 
 if (studyViewToggle) {
@@ -1192,12 +1366,116 @@ if (studyViewToggle) {
            studyViewToggle.querySelectorAll('.view-toggle-btn').forEach(b => {
                b.classList.toggle('active', b === btn);
            });
-           if (studyLogView) studyLogView.classList.toggle('view-hidden', studyViewMode !== 'log');
+           if (studyTrackView) studyTrackView.classList.toggle('view-hidden', studyViewMode !== 'track');
+           if (studyTimerView) studyTimerView.classList.toggle('view-hidden', studyViewMode !== 'timer');
+           if (studyActivitiesView) studyActivitiesView.classList.toggle('view-hidden', studyViewMode !== 'activities');
            if (studyBreakdownView) studyBreakdownView.classList.toggle('view-hidden', studyViewMode !== 'breakdown');
-           if (studyViewMode === 'breakdown') renderStudyBreakdownCharts();
        });
    });
 }
+
+
+// ==========================================
+// real-time time tracker — pick an activity,
+// hit start, and it counts up live like a
+// stopwatch. hitting stop logs the elapsed
+// time straight into that activity's totals.
+// the active session is saved to localStorage
+// so it keeps counting correctly even if the
+// page gets reloaded mid-session.
+// ==========================================
+const trackerStartStopBtn = document.getElementById('trackerStartStopBtn');
+const trackerElapsedDisplay = document.getElementById('trackerElapsedDisplay');
+const trackerActiveLabel = document.getElementById('trackerActiveLabel');
+
+
+let activeTracking = JSON.parse(localStorage.getItem('myActiveTracking')) || null;
+let trackerIntervalId = null;
+
+
+function formatElapsed(totalSeconds) {
+   const hrs = Math.floor(totalSeconds / 3600);
+   const mins = Math.floor((totalSeconds % 3600) / 60);
+   const secs = totalSeconds % 60;
+   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+
+function updateTrackerDisplay() {
+   if (!trackerElapsedDisplay) return;
+   if (!activeTracking) {
+       trackerElapsedDisplay.textContent = "00:00:00";
+       if (trackerActiveLabel) trackerActiveLabel.textContent = "";
+       return;
+   }
+   const elapsedSeconds = Math.floor((Date.now() - activeTracking.startTime) / 1000);
+   trackerElapsedDisplay.textContent = formatElapsed(elapsedSeconds);
+   if (trackerActiveLabel) trackerActiveLabel.textContent = `tracking: ${activeTracking.subject}`;
+}
+
+
+function startTrackerTicking() {
+   if (trackerIntervalId) clearInterval(trackerIntervalId);
+   trackerIntervalId = setInterval(updateTrackerDisplay, 1000);
+}
+
+
+function setTrackerUIState() {
+   if (!trackerStartStopBtn) return;
+   if (activeTracking) {
+       trackerStartStopBtn.textContent = 'stop';
+       trackerStartStopBtn.classList.add('tracking');
+       if (trackerSubjectSelect) trackerSubjectSelect.disabled = true;
+   } else {
+       trackerStartStopBtn.textContent = 'start';
+       trackerStartStopBtn.classList.remove('tracking');
+       if (trackerSubjectSelect) trackerSubjectSelect.disabled = false;
+   }
+}
+
+
+if (trackerStartStopBtn) {
+   trackerStartStopBtn.addEventListener('click', () => {
+       if (!activeTracking) {
+           if (studySubjects.length === 0) {
+               alert("add an activity first.");
+               return;
+           }
+           const subject = trackerSubjectSelect ? trackerSubjectSelect.value : studySubjects[0];
+           activeTracking = { subject: subject, startTime: Date.now() };
+           localStorage.setItem('myActiveTracking', JSON.stringify(activeTracking));
+           setTrackerUIState();
+           startTrackerTicking();
+           updateTrackerDisplay();
+       } else {
+           const elapsedMs = Date.now() - activeTracking.startTime;
+           const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+
+           if (elapsedSeconds >= 30) {
+               const minutes = Math.max(1, Math.round(elapsedMs / 60000));
+               studyLogs.push({ subject: activeTracking.subject, minutes: minutes, logged: Date.now() });
+               localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
+               renderStudyLogs();
+               renderStudyBreakdownCharts();
+           }
+
+
+           activeTracking = null;
+           localStorage.removeItem('myActiveTracking');
+           clearInterval(trackerIntervalId);
+           trackerIntervalId = null;
+           setTrackerUIState();
+           updateTrackerDisplay();
+       }
+   });
+}
+
+
+renderTrackerSubjectSelect();
+setTrackerUIState();
+updateTrackerDisplay();
+if (activeTracking) startTrackerTicking();
 
 
 // ==========================================
