@@ -786,21 +786,28 @@ calculateCountdowns();
 // ==========================================
 // unified calendar engine — week view & month view
 // share one date-keyed event store, so anything you
-// add shows up in both views automatically
+// add shows up in both views automatically. clicking
+// any day box opens it up in a modal so cramped event
+// lists can be read in full.
 // ==========================================
 const calendarViewToggle = document.getElementById('calendarViewToggle');
+const weekLayoutToggle = document.getElementById('weekLayoutToggle');
 const calendarEventInput = document.getElementById('calendarEventInput');
 const calendarEventDateInput = document.getElementById('calendarEventDateInput');
 const addCalendarEventBtn = document.getElementById('addCalendarEventBtn');
 const weekViewGrid = document.getElementById('weekViewGrid');
+const weekViewRows = document.getElementById('weekViewRows');
 const maagDaysGrid = document.getElementById('maagDaysGrid');
 
 
 let calendarEvents = JSON.parse(localStorage.getItem('myCalendarEvents')) || {};
 let calendarViewMode = localStorage.getItem('myCalendarViewMode') || 'week';
+let weekLayoutMode = localStorage.getItem('myWeekLayoutMode') || 'columns';
 
 
 const calendarDayAbbrevs = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const calendarDayFullNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+const calendarMonthFullNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 
 
 function pad2(n) {
@@ -837,7 +844,8 @@ function renderEventListInto(listEl, key) {
        const delBtn = document.createElement('button');
        delBtn.textContent = 'x';
        delBtn.className = 'delete-btn';
-       delBtn.addEventListener('click', () => {
+       delBtn.addEventListener('click', (e) => {
+           e.stopPropagation();
            calendarEvents[key].splice(index, 1);
            localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
            renderCalendarViews();
@@ -846,6 +854,79 @@ function renderEventListInto(listEl, key) {
 
        li.appendChild(delBtn);
        listEl.appendChild(li);
+   });
+}
+
+
+// ==========================================
+// day-events modal — clicking any day box in
+// week or month view opens it here so cramped
+// lists can be read (and trimmed) in full
+// ==========================================
+const dayEventsModalOverlay = document.getElementById('dayEventsModalOverlay');
+const dayEventsModalTitle = document.getElementById('dayEventsModalTitle');
+const dayEventsModalList = document.getElementById('dayEventsModalList');
+const dayEventsModalClose = document.getElementById('dayEventsModalClose');
+
+
+function formatModalDayTitle(dayDate) {
+   return `${calendarDayFullNames[dayDate.getDay()]}, ${calendarMonthFullNames[dayDate.getMonth()]} ${dayDate.getDate()}`;
+}
+
+
+function renderDayEventsModalList(key) {
+   if (!dayEventsModalList) return;
+   dayEventsModalList.innerHTML = "";
+   const events = calendarEvents[key] || [];
+
+
+   if (events.length === 0) {
+       dayEventsModalList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing yet</li>`;
+       return;
+   }
+
+
+   events.forEach((eventText, index) => {
+       const li = document.createElement('li');
+       const span = document.createElement('span');
+       span.textContent = eventText;
+       li.appendChild(span);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', (e) => {
+           e.stopPropagation();
+           calendarEvents[key].splice(index, 1);
+           localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
+           renderCalendarViews();
+           renderDayEventsModalList(key);
+       });
+
+
+       li.appendChild(delBtn);
+       dayEventsModalList.appendChild(li);
+   });
+}
+
+
+function openDayEventsModal(key, dayDate) {
+   if (dayEventsModalTitle) dayEventsModalTitle.textContent = formatModalDayTitle(dayDate);
+   renderDayEventsModalList(key);
+   if (dayEventsModalOverlay) dayEventsModalOverlay.classList.remove('view-hidden');
+}
+
+
+function closeDayEventsModal() {
+   if (dayEventsModalOverlay) dayEventsModalOverlay.classList.add('view-hidden');
+}
+
+
+if (dayEventsModalClose) dayEventsModalClose.addEventListener('click', closeDayEventsModal);
+if (dayEventsModalOverlay) {
+   dayEventsModalOverlay.addEventListener('click', (e) => {
+       if (e.target === dayEventsModalOverlay) closeDayEventsModal();
    });
 }
 
@@ -868,6 +949,7 @@ function renderWeekView() {
        const dayColumn = document.createElement('div');
        dayColumn.className = "day-column";
        if (key === dateKeyFor(today)) dayColumn.classList.add('today-highlight');
+       dayColumn.addEventListener('click', () => openDayEventsModal(key, dayDate));
 
 
        const header = document.createElement('div');
@@ -897,6 +979,71 @@ function renderWeekView() {
 }
 
 
+// compact week layout — one row per day, so the whole
+// week is visible at a glance without tall columns
+function renderWeekRows() {
+   if (!weekViewRows) return;
+   weekViewRows.innerHTML = "";
+
+
+   const today = new Date();
+   const monday = getMondayOf(today);
+
+
+   for (let i = 0; i < 7; i++) {
+       const dayDate = new Date(monday);
+       dayDate.setDate(monday.getDate() + i);
+       const key = dateKeyFor(dayDate);
+       const events = calendarEvents[key] || [];
+
+
+       const row = document.createElement('div');
+       row.className = "week-row-day";
+       if (key === dateKeyFor(today)) row.classList.add('today-highlight');
+       row.addEventListener('click', () => openDayEventsModal(key, dayDate));
+
+
+       const label = document.createElement('div');
+       label.className = "week-row-day-label";
+
+       const nameLine = document.createElement('div');
+       nameLine.className = "week-row-day-name";
+       nameLine.textContent = calendarDayAbbrevs[dayDate.getDay()];
+       label.appendChild(nameLine);
+
+       const dateLine = document.createElement('div');
+       dateLine.className = "week-row-day-date";
+       dateLine.textContent = `${dayDate.getDate()}`;
+       label.appendChild(dateLine);
+
+       row.appendChild(label);
+
+
+       const eventsWrap = document.createElement('div');
+       eventsWrap.className = "week-row-events";
+
+
+       if (events.length === 0) {
+           const empty = document.createElement('span');
+           empty.className = "week-row-empty";
+           empty.textContent = "nothing yet";
+           eventsWrap.appendChild(empty);
+       } else {
+           events.forEach(eventText => {
+               const pill = document.createElement('span');
+               pill.className = "week-row-event-pill";
+               pill.textContent = eventText;
+               eventsWrap.appendChild(pill);
+           });
+       }
+
+
+       row.appendChild(eventsWrap);
+       weekViewRows.appendChild(row);
+   }
+}
+
+
 function renderMonthView() {
    if (!maagDaysGrid) return;
    maagDaysGrid.innerHTML = "";
@@ -916,6 +1063,7 @@ function renderMonthView() {
        const dayBox = document.createElement('div');
        dayBox.className = "maag-day-box";
        if (key === dateKeyFor(today)) dayBox.classList.add('today-highlight');
+       dayBox.addEventListener('click', () => openDayEventsModal(key, dayDate));
 
 
        const numDiv = document.createElement('div');
@@ -937,6 +1085,7 @@ function renderMonthView() {
 
 function renderCalendarViews() {
    renderWeekView();
+   renderWeekRows();
    renderMonthView();
    renderHomeUpcomingEvents();
 }
@@ -977,8 +1126,26 @@ function renderHomeUpcomingEvents() {
 }
 
 
+function applyWeekLayoutMode() {
+   if (weekViewGrid) weekViewGrid.classList.toggle('view-hidden', weekLayoutMode !== 'columns');
+   if (weekViewRows) weekViewRows.classList.toggle('view-hidden', weekLayoutMode !== 'rows');
+   if (weekLayoutToggle) {
+       weekLayoutToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
+           btn.classList.toggle('active', btn.getAttribute('data-layout') === weekLayoutMode);
+       });
+   }
+}
+
+
 function applyCalendarViewMode() {
-   if (weekViewGrid) weekViewGrid.classList.toggle('view-hidden', calendarViewMode !== 'week');
+   if (calendarViewMode === 'week') {
+       if (weekLayoutToggle) weekLayoutToggle.classList.remove('view-hidden');
+       applyWeekLayoutMode();
+   } else {
+       if (weekLayoutToggle) weekLayoutToggle.classList.add('view-hidden');
+       if (weekViewGrid) weekViewGrid.classList.add('view-hidden');
+       if (weekViewRows) weekViewRows.classList.add('view-hidden');
+   }
    if (maagDaysGrid) maagDaysGrid.classList.toggle('view-hidden', calendarViewMode !== 'month');
    if (calendarViewToggle) {
        calendarViewToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
@@ -994,6 +1161,17 @@ if (calendarViewToggle) {
            calendarViewMode = btn.getAttribute('data-view');
            localStorage.setItem('myCalendarViewMode', calendarViewMode);
            applyCalendarViewMode();
+       });
+   });
+}
+
+
+if (weekLayoutToggle) {
+   weekLayoutToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
+       btn.addEventListener('click', () => {
+           weekLayoutMode = btn.getAttribute('data-layout');
+           localStorage.setItem('myWeekLayoutMode', weekLayoutMode);
+           applyWeekLayoutMode();
        });
    });
 }
@@ -1536,6 +1714,437 @@ if (resetTimerBtn) {
        setTimer(25);
    });
 }
+
+
+// ==========================================
+// health tab — diet and gym, toggled like the
+// study page's track/timer/activities/breakdown
+// ==========================================
+const healthViewToggle = document.getElementById('healthViewToggle');
+const dietView = document.getElementById('dietView');
+const gymView = document.getElementById('gymView');
+
+
+let healthViewMode = 'diet';
+
+
+if (healthViewToggle) {
+   healthViewToggle.querySelectorAll('.view-toggle-btn').forEach(btn => {
+       btn.addEventListener('click', () => {
+           healthViewMode = btn.getAttribute('data-view');
+           healthViewToggle.querySelectorAll('.view-toggle-btn').forEach(b => {
+               b.classList.toggle('active', b === btn);
+           });
+           if (dietView) dietView.classList.toggle('view-hidden', healthViewMode !== 'diet');
+           if (gymView) gymView.classList.toggle('view-hidden', healthViewMode !== 'gym');
+           if (healthViewMode === 'gym') {
+               renderGymSplit();
+               renderGymMiniCalendar();
+               renderGymStreak();
+           }
+       });
+   });
+}
+
+
+// ==========================================
+// diet — a daily food checklist (resets who's
+// checked off at midnight, not the list itself),
+// a completion bar, and a water glass counter
+// that also resets at midnight
+// ==========================================
+const dietProgressLabel = document.getElementById('dietProgressLabel');
+const dietProgressFill = document.getElementById('dietProgressFill');
+const dietFoodInput = document.getElementById('dietFoodInput');
+const addDietFoodBtn = document.getElementById('addDietFoodBtn');
+const dietFoodList = document.getElementById('dietFoodList');
+const waterMinusBtn = document.getElementById('waterMinusBtn');
+const waterPlusBtn = document.getElementById('waterPlusBtn');
+const waterCountValue = document.getElementById('waterCountValue');
+
+
+let dietFoods = JSON.parse(localStorage.getItem('myDietFoods')) || [];
+
+
+function renderDietProgress() {
+   if (!dietProgressLabel || !dietProgressFill) return;
+   const todayKey = dateKeyFor(new Date());
+   const total = dietFoods.length;
+   const eaten = dietFoods.filter(food => food.lastCheckedDate === todayKey).length;
+   dietProgressLabel.textContent = `${eaten} / ${total} eaten`;
+   const percent = total > 0 ? Math.round((eaten / total) * 100) : 0;
+   dietProgressFill.style.width = `${percent}%`;
+}
+
+
+function renderDietFoodList() {
+   if (!dietFoodList) return;
+   dietFoodList.innerHTML = "";
+   const todayKey = dateKeyFor(new Date());
+
+
+   if (dietFoods.length === 0) {
+       dietFoodList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">no foods yet</li>`;
+       renderDietProgress();
+       return;
+   }
+
+
+   dietFoods.forEach((food, index) => {
+       const li = document.createElement('li');
+
+
+       const leftSide = document.createElement('div');
+       leftSide.className = 'task-left';
+
+
+       const checkbox = document.createElement('input');
+       checkbox.type = 'checkbox';
+       checkbox.className = 'task-checkbox';
+       checkbox.checked = food.lastCheckedDate === todayKey;
+       checkbox.addEventListener('change', () => {
+           food.lastCheckedDate = checkbox.checked ? todayKey : null;
+           localStorage.setItem('myDietFoods', JSON.stringify(dietFoods));
+           renderDietFoodList();
+       });
+
+
+       const textSpan = document.createElement('span');
+       textSpan.textContent = food.name;
+       if (checkbox.checked) textSpan.style.textDecoration = 'line-through';
+
+
+       leftSide.appendChild(checkbox);
+       leftSide.appendChild(textSpan);
+       li.appendChild(leftSide);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           dietFoods.splice(index, 1);
+           localStorage.setItem('myDietFoods', JSON.stringify(dietFoods));
+           renderDietFoodList();
+       });
+       li.appendChild(delBtn);
+
+
+       dietFoodList.appendChild(li);
+   });
+
+
+   renderDietProgress();
+}
+
+
+if (addDietFoodBtn && dietFoodInput) {
+   addDietFoodBtn.addEventListener('click', () => {
+       const val = dietFoodInput.value.trim();
+       if (val !== "") {
+           dietFoods.push({ name: val, lastCheckedDate: null });
+           localStorage.setItem('myDietFoods', JSON.stringify(dietFoods));
+           dietFoodInput.value = "";
+           renderDietFoodList();
+       }
+   });
+}
+
+
+renderDietFoodList();
+
+
+// water counter — resets to 0 each day by comparing
+// its stored date to today's date on every load
+let waterState = JSON.parse(localStorage.getItem('myWaterState')) || { count: 0, dateKey: dateKeyFor(new Date()) };
+if (waterState.dateKey !== dateKeyFor(new Date())) {
+   waterState = { count: 0, dateKey: dateKeyFor(new Date()) };
+   localStorage.setItem('myWaterState', JSON.stringify(waterState));
+}
+
+
+function renderWaterCounter() {
+   if (waterCountValue) waterCountValue.textContent = waterState.count;
+}
+
+
+if (waterPlusBtn) {
+   waterPlusBtn.addEventListener('click', () => {
+       waterState.count++;
+       waterState.dateKey = dateKeyFor(new Date());
+       localStorage.setItem('myWaterState', JSON.stringify(waterState));
+       renderWaterCounter();
+   });
+}
+
+
+if (waterMinusBtn) {
+   waterMinusBtn.addEventListener('click', () => {
+       waterState.count = Math.max(0, waterState.count - 1);
+       waterState.dateKey = dateKeyFor(new Date());
+       localStorage.setItem('myWaterState', JSON.stringify(waterState));
+       renderWaterCounter();
+   });
+}
+
+
+renderWaterCounter();
+
+
+// ==========================================
+// gym — a weekly split (today's card stands out),
+// exercises per day via a modal, and a mini
+// calendar to check off gym days and see a streak
+// ==========================================
+const gymSplitGrid = document.getElementById('gymSplitGrid');
+const gymStreakLabel = document.getElementById('gymStreakLabel');
+const gymMiniCalendar = document.getElementById('gymMiniCalendar');
+const gymDayModalOverlay = document.getElementById('gymDayModalOverlay');
+const gymDayModalTitle = document.getElementById('gymDayModalTitle');
+const gymDayModalClose = document.getElementById('gymDayModalClose');
+const gymMuscleGroupInput = document.getElementById('gymMuscleGroupInput');
+const saveGymMuscleGroupBtn = document.getElementById('saveGymMuscleGroupBtn');
+const gymExerciseInput = document.getElementById('gymExerciseInput');
+const addGymExerciseBtn = document.getElementById('addGymExerciseBtn');
+const gymExerciseList = document.getElementById('gymExerciseList');
+
+
+const gymDayShortNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const gymDayFullNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+
+let gymSplit = JSON.parse(localStorage.getItem('myGymSplit')) || {};
+let gymAttendance = JSON.parse(localStorage.getItem('myGymAttendance')) || {};
+let currentGymDayIndex = null;
+
+
+function getGymDay(dayIndex) {
+   const key = String(dayIndex);
+   if (!gymSplit[key]) gymSplit[key] = { muscleGroup: "", exercises: [] };
+   return gymSplit[key];
+}
+
+
+function renderGymSplit() {
+   if (!gymSplitGrid) return;
+   gymSplitGrid.innerHTML = "";
+   const todayIdx = new Date().getDay();
+
+
+   for (let i = 0; i < 7; i++) {
+       const dayData = getGymDay(i);
+       const card = document.createElement('div');
+       card.className = "gym-day-card";
+       if (i === todayIdx) card.classList.add('gym-today');
+
+
+       const nameDiv = document.createElement('div');
+       nameDiv.className = "gym-day-name";
+       nameDiv.textContent = gymDayShortNames[i];
+       card.appendChild(nameDiv);
+
+
+       const muscleDiv = document.createElement('div');
+       muscleDiv.className = "gym-day-muscle";
+       if (dayData.muscleGroup) {
+           muscleDiv.textContent = dayData.muscleGroup;
+       } else {
+           muscleDiv.textContent = "rest / unset";
+           muscleDiv.classList.add('gym-day-unset');
+       }
+       card.appendChild(muscleDiv);
+
+
+       if (dayData.exercises && dayData.exercises.length > 0) {
+           const countDiv = document.createElement('div');
+           countDiv.className = "gym-day-exercise-count";
+           countDiv.textContent = `${dayData.exercises.length} exercise${dayData.exercises.length === 1 ? '' : 's'}`;
+           card.appendChild(countDiv);
+       }
+
+
+       card.addEventListener('click', () => openGymDayModal(i));
+       gymSplitGrid.appendChild(card);
+   }
+}
+
+
+function renderGymExerciseList() {
+   if (!gymExerciseList || currentGymDayIndex === null) return;
+   gymExerciseList.innerHTML = "";
+   const dayData = getGymDay(currentGymDayIndex);
+
+
+   if (dayData.exercises.length === 0) {
+       gymExerciseList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">no exercises yet</li>`;
+       return;
+   }
+
+
+   dayData.exercises.forEach((exercise, index) => {
+       const li = document.createElement('li');
+       const span = document.createElement('span');
+       span.textContent = exercise;
+       li.appendChild(span);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           dayData.exercises.splice(index, 1);
+           localStorage.setItem('myGymSplit', JSON.stringify(gymSplit));
+           renderGymExerciseList();
+           renderGymSplit();
+       });
+       li.appendChild(delBtn);
+       gymExerciseList.appendChild(li);
+   });
+}
+
+
+function openGymDayModal(dayIndex) {
+   currentGymDayIndex = dayIndex;
+   const dayData = getGymDay(dayIndex);
+   if (gymDayModalTitle) gymDayModalTitle.textContent = gymDayFullNames[dayIndex];
+   if (gymMuscleGroupInput) gymMuscleGroupInput.value = dayData.muscleGroup || "";
+   renderGymExerciseList();
+   if (gymDayModalOverlay) gymDayModalOverlay.classList.remove('view-hidden');
+}
+
+
+function closeGymDayModal() {
+   if (gymDayModalOverlay) gymDayModalOverlay.classList.add('view-hidden');
+   currentGymDayIndex = null;
+}
+
+
+if (gymDayModalClose) gymDayModalClose.addEventListener('click', closeGymDayModal);
+if (gymDayModalOverlay) {
+   gymDayModalOverlay.addEventListener('click', (e) => {
+       if (e.target === gymDayModalOverlay) closeGymDayModal();
+   });
+}
+
+
+if (saveGymMuscleGroupBtn) {
+   saveGymMuscleGroupBtn.addEventListener('click', () => {
+       if (currentGymDayIndex === null || !gymMuscleGroupInput) return;
+       const dayData = getGymDay(currentGymDayIndex);
+       dayData.muscleGroup = gymMuscleGroupInput.value.trim();
+       localStorage.setItem('myGymSplit', JSON.stringify(gymSplit));
+       renderGymSplit();
+   });
+}
+
+
+if (addGymExerciseBtn && gymExerciseInput) {
+   addGymExerciseBtn.addEventListener('click', () => {
+       if (currentGymDayIndex === null) return;
+       const val = gymExerciseInput.value.trim();
+       if (val !== "") {
+           const dayData = getGymDay(currentGymDayIndex);
+           dayData.exercises.push(val);
+           localStorage.setItem('myGymSplit', JSON.stringify(gymSplit));
+           gymExerciseInput.value = "";
+           renderGymExerciseList();
+           renderGymSplit();
+       }
+   });
+}
+
+
+function renderGymMiniCalendar() {
+   if (!gymMiniCalendar) return;
+   gymMiniCalendar.innerHTML = "";
+
+
+   const today = new Date();
+   const year = today.getFullYear();
+   const monthIdx = today.getMonth();
+   const totalDays = new Date(year, monthIdx + 1, 0).getDate();
+   const firstWeekday = new Date(year, monthIdx, 1).getDay();
+
+
+   const label = document.createElement('div');
+   label.className = "mini-calendar-label";
+   label.textContent = `${miniCalMonths[monthIdx]} ${year}`;
+   gymMiniCalendar.appendChild(label);
+
+
+   const grid = document.createElement('div');
+   grid.className = "mini-calendar-grid";
+
+
+   miniCalWeekdays.forEach(w => {
+       const head = document.createElement('div');
+       head.className = "mini-calendar-weekday";
+       head.textContent = w;
+       grid.appendChild(head);
+   });
+
+
+   for (let i = 0; i < firstWeekday; i++) {
+       grid.appendChild(document.createElement('div'));
+   }
+
+
+   for (let d = 1; d <= totalDays; d++) {
+       const dayDate = new Date(year, monthIdx, d);
+       const key = dateKeyFor(dayDate);
+
+
+       const cell = document.createElement('div');
+       cell.className = "mini-calendar-day";
+       if (d === today.getDate()) cell.classList.add('gym-today-ring');
+       if (gymAttendance[key]) cell.classList.add('gym-attended');
+       cell.textContent = d;
+
+
+       cell.addEventListener('click', () => {
+           if (gymAttendance[key]) {
+               delete gymAttendance[key];
+           } else {
+               gymAttendance[key] = true;
+           }
+           localStorage.setItem('myGymAttendance', JSON.stringify(gymAttendance));
+           renderGymMiniCalendar();
+           renderGymStreak();
+       });
+
+
+       grid.appendChild(cell);
+   }
+
+
+   gymMiniCalendar.appendChild(grid);
+}
+
+
+function renderGymStreak() {
+   if (!gymStreakLabel) return;
+   let streak = 0;
+   const cursor = new Date();
+
+
+   // if today hasn't been checked off yet, that alone shouldn't
+   // break an existing streak — start counting from yesterday
+   if (!gymAttendance[dateKeyFor(cursor)]) {
+       cursor.setDate(cursor.getDate() - 1);
+   }
+   while (gymAttendance[dateKeyFor(cursor)]) {
+       streak++;
+       cursor.setDate(cursor.getDate() - 1);
+   }
+
+
+   gymStreakLabel.textContent = `${streak} day streak`;
+}
+
+
+renderGymSplit();
+renderGymMiniCalendar();
+renderGymStreak();
 
 
 // ==========================================
