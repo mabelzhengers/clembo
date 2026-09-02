@@ -26,6 +26,7 @@
          <button class="tab-btn" data-tab="habit-page">habits</button>
          <button class="tab-btn" data-tab="tracker-page">tracker</button>
          <button class="tab-btn" data-tab="study-page">study</button>
+         <button class="tab-btn" data-tab="health-page">health</button>
          <button class="tab-btn" data-tab="calendar-page">calendar</button>
          <button class="tab-btn" data-tab="dump-page">brain dump</button>
          <button class="tab-btn" data-tab="settings-page">settings</button>
@@ -238,12 +239,66 @@
          </div>
 
 
+         <div id="health-page" class="tab-content">
+             <h1>health</h1>
+
+             <div class="view-toggle" id="healthViewToggle">
+                 <button class="view-toggle-btn active" data-view="diet">diet</button>
+                 <button class="view-toggle-btn" data-view="gym">gym</button>
+             </div>
+
+
+             <div id="dietView">
+                 <div class="diet-progress-card">
+                     <div class="diet-progress-label" id="dietProgressLabel">0 / 0 eaten</div>
+                     <div class="diet-progress-track">
+                         <div class="diet-progress-fill" id="dietProgressFill"></div>
+                     </div>
+                 </div>
+
+                 <div class="water-card">
+                     <h3 style="color: #e07a5f; margin-bottom: 12px;">water</h3>
+                     <div class="water-counter-row">
+                         <button id="waterMinusBtn" class="water-btn">−</button>
+                         <div class="water-count-value" id="waterCountValue">0</div>
+                         <button id="waterPlusBtn" class="water-btn">+</button>
+                     </div>
+                     <div class="water-counter-caption">glasses today</div>
+                 </div>
+
+                 <h3 style="margin-top: 25px; margin-bottom: 10px; color: #e07a5f;">foods</h3>
+                 <div class="input-area">
+                     <input type="text" id="dietFoodInput" placeholder="add a food">
+                     <button id="addDietFoodBtn">add</button>
+                 </div>
+                 <ul id="dietFoodList"></ul>
+             </div>
+
+
+             <div id="gymView" class="view-hidden">
+                 <h3 style="margin-bottom: 12px; color: #e07a5f;">weekly split</h3>
+                 <div class="gym-split-grid" id="gymSplitGrid"></div>
+
+                 <h3 style="margin-top: 30px; margin-bottom: 12px; color: #e07a5f;">attendance</h3>
+                 <div class="gym-streak-card">
+                     <div class="gym-streak-label" id="gymStreakLabel">0 day streak</div>
+                     <div id="gymMiniCalendar"></div>
+                 </div>
+             </div>
+         </div>
+
+
          <div id="calendar-page" class="tab-content">
              <h1 id="calendarHeader">calendar</h1>
 
              <div class="view-toggle" id="calendarViewToggle">
                  <button class="view-toggle-btn active" data-view="week">week view</button>
                  <button class="view-toggle-btn" data-view="month">month view</button>
+             </div>
+
+             <div class="view-toggle" id="weekLayoutToggle">
+                 <button class="view-toggle-btn active" data-layout="columns">columns</button>
+                 <button class="view-toggle-btn" data-layout="rows">rows</button>
              </div>
 
              <div class="calendar-inputs">
@@ -254,6 +309,7 @@
 
 
              <div class="waag-grid" id="weekViewGrid"></div>
+             <div id="weekViewRows" class="view-hidden"></div>
 
 
              <div id="maagDaysGrid" class="view-hidden"></div>
@@ -298,6 +354,34 @@
                  <button id="addExamBtn" style="width:100%; display:block; margin-bottom: 20px;">add tracking</button>
              </div>
              <ul id="settingsExamList"></ul>
+         </div>
+
+
+         <div id="dayEventsModalOverlay" class="modal-overlay view-hidden">
+             <div class="modal-box">
+                 <button id="dayEventsModalClose" class="modal-close">x</button>
+                 <h3 id="dayEventsModalTitle" class="modal-title"></h3>
+                 <ul id="dayEventsModalList" class="modal-list"></ul>
+             </div>
+         </div>
+
+
+         <div id="gymDayModalOverlay" class="modal-overlay view-hidden">
+             <div class="modal-box">
+                 <button id="gymDayModalClose" class="modal-close">x</button>
+                 <h3 id="gymDayModalTitle" class="modal-title"></h3>
+
+                 <div class="input-area" style="margin-bottom: 16px;">
+                     <input type="text" id="gymMuscleGroupInput" placeholder="muscle group (ex legs)">
+                     <button id="saveGymMuscleGroupBtn">save</button>
+                 </div>
+
+                 <div class="input-area" style="margin-bottom: 10px;">
+                     <input type="text" id="gymExerciseInput" placeholder="add an exercise">
+                     <button id="addGymExerciseBtn">add</button>
+                 </div>
+                 <ul id="gymExerciseList" class="modal-list"></ul>
+             </div>
          </div>
 
 
