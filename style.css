@@ -682,6 +682,141 @@ body.dark-mode #resetTimerBtn {
 
 
 /* ==========================================
+  REAL-TIME TIME TRACKER
+  ========================================== */
+.tracker-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 16px;
+ padding: 30px;
+ text-align: center;
+ max-width: 400px;
+ margin: 20px auto;
+ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+
+body.dark-mode .tracker-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.tracker-elapsed {
+ font-size: 40px;
+ font-weight: 800;
+ color: #e07a5f;
+ margin: 10px 0 6px;
+ letter-spacing: 2px;
+ font-family: monospace;
+}
+
+
+body.dark-mode .tracker-elapsed {
+ color: #f4a261;
+}
+
+
+.tracker-active-label {
+ font-size: 13px;
+ font-weight: 700;
+ color: #8c7e70;
+ text-transform: lowercase;
+ min-height: 16px;
+}
+
+
+body.dark-mode .tracker-active-label {
+ color: #bcae9e;
+}
+
+
+#trackerStartStopBtn {
+ background-color: #4a7c59 !important;
+ color: #ffffff !important;
+ border: none !important;
+ transition: background-color 0.2s ease;
+}
+
+
+#trackerStartStopBtn:hover {
+ background-color: #3b6346 !important;
+}
+
+
+#trackerStartStopBtn.tracking {
+ background-color: #c0392b !important;
+}
+
+
+#trackerStartStopBtn.tracking:hover {
+ background-color: #a5301f !important;
+}
+
+
+body.dark-mode #trackerStartStopBtn {
+ background-color: #5c9c6f !important;
+}
+
+
+body.dark-mode #trackerStartStopBtn:hover {
+ background-color: #4a7c59 !important;
+}
+
+
+body.dark-mode #trackerStartStopBtn.tracking {
+ background-color: #d84a3a !important;
+}
+
+
+body.dark-mode #trackerStartStopBtn.tracking:hover {
+ background-color: #b53b2d !important;
+}
+
+
+/* ==========================================
+  PERSISTENT "TODAY" BREAKDOWN CARD
+  ========================================== */
+.today-breakdown-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 16px;
+ padding: 24px;
+ max-width: 480px;
+ margin: 20px auto;
+ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+
+body.dark-mode .today-breakdown-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.breakdown-container.compact {
+ gap: 20px;
+}
+
+
+.breakdown-container.compact .breakdown-chart {
+ width: 140px;
+ height: 140px;
+}
+
+
+.breakdown-container.compact .breakdown-chart::after {
+ width: 80px;
+ height: 80px;
+}
+
+
+.breakdown-container.compact .breakdown-legend {
+ min-width: 160px;
+}
+
+
+/* ==========================================
   ENHANCED EXAM COUNTDOWN STYLING
   ========================================== */
 #countdownContainer {
@@ -1232,6 +1367,100 @@ body.dark-mode .mood-day-card.score-5 { background-color: #3f322c !important; bo
 body.dark-mode .mood-day-card.selected {
  border-color: #f4a261 !important;
  box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.25);
+}
+
+
+/* ==========================================
+  HABIT LINE CHART
+  ========================================== */
+.habit-chart-card {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 16px;
+ padding: 24px;
+ margin: 20px auto;
+ max-width: 640px;
+ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+
+body.dark-mode .habit-chart-card {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.habit-chart-title {
+ text-align: center;
+ font-weight: 800;
+ font-size: 15px;
+ color: #4e443c;
+ text-transform: lowercase;
+ margin-bottom: 14px;
+}
+
+
+body.dark-mode .habit-chart-title {
+ color: #f7eade;
+}
+
+
+.habit-chart-svg-wrap {
+ width: 100%;
+}
+
+
+.habit-chart-svg {
+ width: 100%;
+ height: auto;
+ display: block;
+}
+
+
+.habit-chart-axis {
+ stroke: #ebdccb;
+ stroke-width: 1.5;
+}
+
+
+body.dark-mode .habit-chart-axis {
+ stroke: #42352e;
+}
+
+
+.habit-chart-line {
+ fill: none;
+ stroke: #4a7c59;
+ stroke-width: 3;
+ stroke-linejoin: round;
+ stroke-linecap: round;
+}
+
+
+body.dark-mode .habit-chart-line {
+ stroke: #5c9c6f;
+}
+
+
+.habit-chart-dot {
+ fill: #4a7c59;
+}
+
+
+body.dark-mode .habit-chart-dot {
+ fill: #5c9c6f;
+}
+
+
+.habit-chart-axis-label {
+ font-size: 11px;
+ fill: #8c7e70;
+ font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+}
+
+
+body.dark-mode .habit-chart-axis-label {
+ fill: #bcae9e;
 }
 
 
