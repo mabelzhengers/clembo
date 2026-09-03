@@ -548,6 +548,7 @@ body.dark-mode .today-highlight {
  gap: 10px !important;
  width: 100% !important;
  margin-bottom: 25px !important;
+ flex-wrap: wrap !important;
 }
 
 
@@ -558,6 +559,11 @@ body.dark-mode .today-highlight {
 
 .calendar-inputs select {
  flex: 1 !important;
+}
+
+
+.calendar-inputs select#recurrenceSelect {
+ flex: 1.6 !important;
 }
 
 
@@ -727,6 +733,33 @@ body.dark-mode .tracker-elapsed {
 
 
 body.dark-mode .tracker-active-label {
+ color: #bcae9e;
+}
+
+
+.tracker-checkbox-label {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 8px;
+ font-size: 12px;
+ font-weight: 700;
+ color: #8c7e70;
+ text-transform: lowercase;
+ margin-bottom: 14px;
+ cursor: pointer;
+}
+
+
+.tracker-checkbox-label input[type="checkbox"] {
+ width: 16px;
+ height: 16px;
+ cursor: pointer;
+ accent-color: #4a7c59;
+}
+
+
+body.dark-mode .tracker-checkbox-label {
  color: #bcae9e;
 }
 
@@ -1525,6 +1558,24 @@ body.dark-mode .habit-chart-axis-label {
 }
 
 
+.study-history-text-wrap {
+ display: flex;
+ flex-direction: column;
+ gap: 2px;
+}
+
+
+.study-history-time {
+ font-size: 11px;
+ color: #a68f7b;
+}
+
+
+body.dark-mode .study-history-time {
+ color: #bcae9e;
+}
+
+
 /* Dark Mode Extensions */
 body.dark-mode .study-summary-box {
  background: #2e2520;
@@ -1793,6 +1844,22 @@ body.dark-mode .modal-list li {
 }
 
 
+.recurring-tag {
+ display: inline-block;
+ font-size: 10px;
+ font-weight: 800;
+ color: #a68f7b;
+ text-transform: lowercase;
+ letter-spacing: 0.3px;
+ margin-left: 8px;
+}
+
+
+body.dark-mode .recurring-tag {
+ color: #bcae9e;
+}
+
+
 /* ==========================================
   WEEK VIEW: COLUMNS VS ROWS LAYOUT
   ========================================== */
@@ -1902,6 +1969,11 @@ body.dark-mode .week-row-day-date {
  overflow: hidden;
  text-overflow: ellipsis;
  max-width: 200px;
+}
+
+
+.week-row-event-pill.recurring {
+ border-style: dashed;
 }
 
 
