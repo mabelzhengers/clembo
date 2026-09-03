@@ -2036,6 +2036,10 @@ let currentGymDayIndex = null;
 function getGymDay(dayIndex) {
    const key = String(dayIndex);
    if (!gymSplit[key]) gymSplit[key] = { muscleGroup: "", exercises: [] };
+   // migrate any old plain-string exercises into checkable objects
+   gymSplit[key].exercises = gymSplit[key].exercises.map(exercise =>
+       typeof exercise === 'string' ? { name: exercise, lastCheckedDate: null } : exercise
+   );
    return gymSplit[key];
 }
 
@@ -2044,6 +2048,7 @@ function renderGymSplit() {
    if (!gymSplitGrid) return;
    gymSplitGrid.innerHTML = "";
    const todayIdx = new Date().getDay();
+   const todayKey = dateKeyFor(new Date());
 
 
    for (let i = 0; i < 7; i++) {
@@ -2071,9 +2076,10 @@ function renderGymSplit() {
 
 
        if (dayData.exercises && dayData.exercises.length > 0) {
+           const doneToday = dayData.exercises.filter(ex => ex.lastCheckedDate === todayKey).length;
            const countDiv = document.createElement('div');
            countDiv.className = "gym-day-exercise-count";
-           countDiv.textContent = `${dayData.exercises.length} exercise${dayData.exercises.length === 1 ? '' : 's'}`;
+           countDiv.textContent = `${doneToday}/${dayData.exercises.length} done today`;
            card.appendChild(countDiv);
        }
 
@@ -2088,6 +2094,7 @@ function renderGymExerciseList() {
    if (!gymExerciseList || currentGymDayIndex === null) return;
    gymExerciseList.innerHTML = "";
    const dayData = getGymDay(currentGymDayIndex);
+   const todayKey = dateKeyFor(new Date());
 
 
    if (dayData.exercises.length === 0) {
@@ -2098,9 +2105,32 @@ function renderGymExerciseList() {
 
    dayData.exercises.forEach((exercise, index) => {
        const li = document.createElement('li');
-       const span = document.createElement('span');
-       span.textContent = exercise;
-       li.appendChild(span);
+
+
+       const leftSide = document.createElement('div');
+       leftSide.className = 'task-left';
+
+
+       const checkbox = document.createElement('input');
+       checkbox.type = 'checkbox';
+       checkbox.className = 'task-checkbox';
+       checkbox.checked = exercise.lastCheckedDate === todayKey;
+       checkbox.addEventListener('change', () => {
+           exercise.lastCheckedDate = checkbox.checked ? todayKey : null;
+           localStorage.setItem('myGymSplit', JSON.stringify(gymSplit));
+           renderGymExerciseList();
+           renderGymSplit();
+       });
+
+
+       const textSpan = document.createElement('span');
+       textSpan.textContent = exercise.name;
+       if (checkbox.checked) textSpan.style.textDecoration = 'line-through';
+
+
+       leftSide.appendChild(checkbox);
+       leftSide.appendChild(textSpan);
+       li.appendChild(leftSide);
 
 
        const delBtn = document.createElement('button');
@@ -2159,7 +2189,7 @@ if (addGymExerciseBtn && gymExerciseInput) {
        const val = gymExerciseInput.value.trim();
        if (val !== "") {
            const dayData = getGymDay(currentGymDayIndex);
-           dayData.exercises.push(val);
+           dayData.exercises.push({ name: val, lastCheckedDate: null });
            localStorage.setItem('myGymSplit', JSON.stringify(gymSplit));
            gymExerciseInput.value = "";
            renderGymExerciseList();
