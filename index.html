@@ -181,10 +181,14 @@
              <div id="studyTrackView">
                  <div class="tracker-card">
                      <h3 style="color: #e07a5f; margin-bottom: 12px;">track time</h3>
-                     <div class="input-area" style="margin-bottom: 14px;">
+                     <div class="input-area" style="margin-bottom: 10px;">
                          <select id="trackerSubjectSelect"></select>
                          <button id="trackerStartStopBtn">start</button>
                      </div>
+                     <label class="tracker-checkbox-label">
+                         <input type="checkbox" id="trackFromLastLogCheckbox">
+                         start from last logged time
+                     </label>
                      <div id="trackerElapsedDisplay" class="tracker-elapsed">00:00:00</div>
                      <div id="trackerActiveLabel" class="tracker-active-label"></div>
                  </div>
@@ -304,6 +308,24 @@
              <div class="calendar-inputs">
                  <input type="text" id="calendarEventInput" placeholder="what's happening?">
                  <input type="date" id="calendarEventDateInput">
+                 <select id="recurrenceSelect">
+                     <option value="none" selected>does not repeat</option>
+                     <option value="daily">every day</option>
+                     <option value="weekly-0">every sunday</option>
+                     <option value="weekly-1">every monday</option>
+                     <option value="weekly-2">every tuesday</option>
+                     <option value="weekly-3">every wednesday</option>
+                     <option value="weekly-4">every thursday</option>
+                     <option value="weekly-5">every friday</option>
+                     <option value="weekly-6">every saturday</option>
+                     <option value="biweekly-0">every 2 sundays</option>
+                     <option value="biweekly-1">every 2 mondays</option>
+                     <option value="biweekly-2">every 2 tuesdays</option>
+                     <option value="biweekly-3">every 2 wednesdays</option>
+                     <option value="biweekly-4">every 2 thursdays</option>
+                     <option value="biweekly-5">every 2 fridays</option>
+                     <option value="biweekly-6">every 2 saturdays</option>
+                 </select>
                  <button id="addCalendarEventBtn">add</button>
              </div>
 
