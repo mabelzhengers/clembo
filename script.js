@@ -794,6 +794,7 @@ const calendarViewToggle = document.getElementById('calendarViewToggle');
 const weekLayoutToggle = document.getElementById('weekLayoutToggle');
 const calendarEventInput = document.getElementById('calendarEventInput');
 const calendarEventDateInput = document.getElementById('calendarEventDateInput');
+const recurrenceSelect = document.getElementById('recurrenceSelect');
 const addCalendarEventBtn = document.getElementById('addCalendarEventBtn');
 const weekViewGrid = document.getElementById('weekViewGrid');
 const weekViewRows = document.getElementById('weekViewRows');
@@ -801,6 +802,7 @@ const maagDaysGrid = document.getElementById('maagDaysGrid');
 
 
 let calendarEvents = JSON.parse(localStorage.getItem('myCalendarEvents')) || {};
+let recurringEvents = JSON.parse(localStorage.getItem('myRecurringEvents')) || [];
 let calendarViewMode = localStorage.getItem('myCalendarViewMode') || 'week';
 let weekLayoutMode = localStorage.getItem('myWeekLayoutMode') || 'columns';
 
@@ -831,29 +833,89 @@ function getMondayOf(dateObj) {
 }
 
 
+// builds a local Date from a "YYYY-MM-DD" key without any timezone
+// shifting (new Date("YYYY-MM-DD") parses as UTC, which can land on
+// the wrong local day — this always matches dateKeyFor's own format)
+function parseDateKey(key) {
+   const [y, m, d] = key.split('-').map(Number);
+   return new Date(y, m - 1, d);
+}
+
+
+// whether a recurring event rule produces an occurrence on a given date
+function recurringEventAppliesToDate(rec, dateObj) {
+   if (rec.type === 'daily') return true;
+   const weekday = dateObj.getDay();
+   if (rec.type === 'weekly') return weekday === rec.weekday;
+   if (rec.type === 'biweekly') {
+       if (weekday !== rec.weekday) return false;
+       const anchor = parseDateKey(rec.anchorDate);
+       const diffDays = Math.round((dateObj - anchor) / (1000 * 60 * 60 * 24));
+       if (diffDays < 0) return false;
+       return Math.floor(diffDays / 7) % 2 === 0;
+   }
+   return false;
+}
+
+
+// merges one-off events for a date with any recurring events that
+// land on it, tagging each so the UI and delete behavior can tell
+// them apart (deleting a recurring one removes the whole series)
+function getEventsForDate(key) {
+   const dateObj = parseDateKey(key);
+   const regular = (calendarEvents[key] || []).map((text, index) => ({ text, recurring: false, index }));
+   const recurring = recurringEvents
+       .filter(rec => recurringEventAppliesToDate(rec, dateObj))
+       .map(rec => ({ text: rec.text, recurring: true, recId: rec.id }));
+   return [...regular, ...recurring];
+}
+
+
+// builds one <li> for an event object (from getEventsForDate), wiring
+// up delete behavior appropriate to whether it's a one-off or recurring
+function createEventListItem(ev, key, afterDelete) {
+   const li = document.createElement('li');
+   const span = document.createElement('span');
+   span.textContent = ev.text;
+   li.appendChild(span);
+
+
+   if (ev.recurring) {
+       const tag = document.createElement('span');
+       tag.className = 'recurring-tag';
+       tag.textContent = 'recurring';
+       li.appendChild(tag);
+   }
+
+
+   const delBtn = document.createElement('button');
+   delBtn.textContent = 'x';
+   delBtn.className = 'delete-btn';
+   delBtn.addEventListener('click', (e) => {
+       e.stopPropagation();
+       if (ev.recurring) {
+           if (!confirm("remove this recurring event from the calendar entirely?")) return;
+           recurringEvents = recurringEvents.filter(r => r.id !== ev.recId);
+           localStorage.setItem('myRecurringEvents', JSON.stringify(recurringEvents));
+       } else {
+           calendarEvents[key].splice(ev.index, 1);
+           localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
+       }
+       renderCalendarViews();
+       if (afterDelete) afterDelete();
+   });
+
+
+   li.appendChild(delBtn);
+   return li;
+}
+
+
 function renderEventListInto(listEl, key) {
    listEl.innerHTML = "";
-   const events = calendarEvents[key] || [];
-   events.forEach((eventText, index) => {
-       const li = document.createElement('li');
-       const span = document.createElement('span');
-       span.textContent = eventText;
-       li.appendChild(span);
-
-
-       const delBtn = document.createElement('button');
-       delBtn.textContent = 'x';
-       delBtn.className = 'delete-btn';
-       delBtn.addEventListener('click', (e) => {
-           e.stopPropagation();
-           calendarEvents[key].splice(index, 1);
-           localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
-           renderCalendarViews();
-       });
-
-
-       li.appendChild(delBtn);
-       listEl.appendChild(li);
+   const events = getEventsForDate(key);
+   events.forEach(ev => {
+       listEl.appendChild(createEventListItem(ev, key));
    });
 }
 
@@ -877,7 +939,7 @@ function formatModalDayTitle(dayDate) {
 function renderDayEventsModalList(key) {
    if (!dayEventsModalList) return;
    dayEventsModalList.innerHTML = "";
-   const events = calendarEvents[key] || [];
+   const events = getEventsForDate(key);
 
 
    if (events.length === 0) {
@@ -886,27 +948,8 @@ function renderDayEventsModalList(key) {
    }
 
 
-   events.forEach((eventText, index) => {
-       const li = document.createElement('li');
-       const span = document.createElement('span');
-       span.textContent = eventText;
-       li.appendChild(span);
-
-
-       const delBtn = document.createElement('button');
-       delBtn.textContent = 'x';
-       delBtn.className = 'delete-btn';
-       delBtn.addEventListener('click', (e) => {
-           e.stopPropagation();
-           calendarEvents[key].splice(index, 1);
-           localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
-           renderCalendarViews();
-           renderDayEventsModalList(key);
-       });
-
-
-       li.appendChild(delBtn);
-       dayEventsModalList.appendChild(li);
+   events.forEach(ev => {
+       dayEventsModalList.appendChild(createEventListItem(ev, key, () => renderDayEventsModalList(key)));
    });
 }
 
@@ -994,7 +1037,7 @@ function renderWeekRows() {
        const dayDate = new Date(monday);
        dayDate.setDate(monday.getDate() + i);
        const key = dateKeyFor(dayDate);
-       const events = calendarEvents[key] || [];
+       const events = getEventsForDate(key);
 
 
        const row = document.createElement('div');
@@ -1029,10 +1072,10 @@ function renderWeekRows() {
            empty.textContent = "nothing yet";
            eventsWrap.appendChild(empty);
        } else {
-           events.forEach(eventText => {
+           events.forEach(ev => {
                const pill = document.createElement('span');
-               pill.className = "week-row-event-pill";
-               pill.textContent = eventText;
+               pill.className = "week-row-event-pill" + (ev.recurring ? " recurring" : "");
+               pill.textContent = ev.text;
                eventsWrap.appendChild(pill);
            });
        }
@@ -1182,13 +1225,32 @@ if (addCalendarEventBtn) {
        if (!calendarEventInput || !calendarEventDateInput) return;
        const text = calendarEventInput.value.trim();
        const dateVal = calendarEventDateInput.value || dateKeyFor(new Date());
-       if (text !== "") {
+       const recurrenceVal = recurrenceSelect ? recurrenceSelect.value : 'none';
+
+
+       if (text === "") return;
+
+
+       if (recurrenceVal === 'none') {
            if (!calendarEvents[dateVal]) calendarEvents[dateVal] = [];
            calendarEvents[dateVal].push(text);
            localStorage.setItem('myCalendarEvents', JSON.stringify(calendarEvents));
-           calendarEventInput.value = "";
-           renderCalendarViews();
+       } else if (recurrenceVal === 'daily') {
+           recurringEvents.push({ id: Date.now() + Math.random(), text, type: 'daily', weekday: null, anchorDate: dateVal });
+           localStorage.setItem('myRecurringEvents', JSON.stringify(recurringEvents));
+       } else if (recurrenceVal.startsWith('weekly-')) {
+           const weekday = parseInt(recurrenceVal.split('-')[1]);
+           recurringEvents.push({ id: Date.now() + Math.random(), text, type: 'weekly', weekday, anchorDate: dateVal });
+           localStorage.setItem('myRecurringEvents', JSON.stringify(recurringEvents));
+       } else if (recurrenceVal.startsWith('biweekly-')) {
+           const weekday = parseInt(recurrenceVal.split('-')[1]);
+           recurringEvents.push({ id: Date.now() + Math.random(), text, type: 'biweekly', weekday, anchorDate: dateVal });
+           localStorage.setItem('myRecurringEvents', JSON.stringify(recurringEvents));
        }
+
+
+       calendarEventInput.value = "";
+       renderCalendarViews();
    });
 }
 
@@ -1328,6 +1390,18 @@ function formatMinutesToHours(totalMinutes) {
 }
 
 
+// formats a timestamp as a lowercase clock time, e.g. "9:24am"
+function formatTimeOfDay(ts) {
+   const d = new Date(ts);
+   let hours = d.getHours();
+   const minutes = d.getMinutes().toString().padStart(2, '0');
+   const ampm = hours >= 12 ? 'pm' : 'am';
+   hours = hours % 12;
+   if (hours === 0) hours = 12;
+   return `${hours}:${minutes}${ampm}`;
+}
+
+
 function renderStudyLogs() {
    if (!studyHoursList) return;
    studyHoursList.innerHTML = "";
@@ -1382,10 +1456,27 @@ function renderStudyLogs() {
    studyLogs.forEach((log, index) => {
        const li = document.createElement('li');
        li.className = "study-history-item";
-      
+
+
+       const textWrap = document.createElement('div');
+       textWrap.className = "study-history-text-wrap";
+
+
        const labelSpan = document.createElement('span');
        labelSpan.textContent = `${log.subject}: +${log.minutes} mins`;
-       li.appendChild(labelSpan);
+       textWrap.appendChild(labelSpan);
+
+
+       if (log.logged) {
+           const startTs = log.logged - (log.minutes * 60000);
+           const timeSpan = document.createElement('span');
+           timeSpan.className = "study-history-time";
+           timeSpan.textContent = `${formatTimeOfDay(startTs)} - ${formatTimeOfDay(log.logged)}`;
+           textWrap.appendChild(timeSpan);
+       }
+
+
+       li.appendChild(textWrap);
 
 
        const delBtn = document.createElement('button');
@@ -1565,10 +1656,23 @@ if (studyViewToggle) {
 const trackerStartStopBtn = document.getElementById('trackerStartStopBtn');
 const trackerElapsedDisplay = document.getElementById('trackerElapsedDisplay');
 const trackerActiveLabel = document.getElementById('trackerActiveLabel');
+const trackFromLastLogCheckbox = document.getElementById('trackFromLastLogCheckbox');
 
 
 let activeTracking = JSON.parse(localStorage.getItem('myActiveTracking')) || null;
 let trackerIntervalId = null;
+
+
+// the timestamp the most recently logged session ended at, or null
+// if nothing has been logged yet — used by "start from last logged
+// time" to pick up right where the last session left off, with no gap
+function getLastLoggedEndTime() {
+   let maxTs = null;
+   studyLogs.forEach(log => {
+       if (log.logged && (maxTs === null || log.logged > maxTs)) maxTs = log.logged;
+   });
+   return maxTs;
+}
 
 
 function formatElapsed(totalSeconds) {
@@ -1604,10 +1708,12 @@ function setTrackerUIState() {
        trackerStartStopBtn.textContent = 'stop';
        trackerStartStopBtn.classList.add('tracking');
        if (trackerSubjectSelect) trackerSubjectSelect.disabled = true;
+       if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = true;
    } else {
        trackerStartStopBtn.textContent = 'start';
        trackerStartStopBtn.classList.remove('tracking');
        if (trackerSubjectSelect) trackerSubjectSelect.disabled = false;
+       if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = false;
    }
 }
 
@@ -1620,7 +1726,16 @@ if (trackerStartStopBtn) {
                return;
            }
            const subject = trackerSubjectSelect ? trackerSubjectSelect.value : studySubjects[0];
-           activeTracking = { subject: subject, startTime: Date.now() };
+
+
+           let startTime = Date.now();
+           if (trackFromLastLogCheckbox && trackFromLastLogCheckbox.checked) {
+               const lastEnd = getLastLoggedEndTime();
+               if (lastEnd) startTime = lastEnd;
+           }
+
+
+           activeTracking = { subject: subject, startTime: startTime };
            localStorage.setItem('myActiveTracking', JSON.stringify(activeTracking));
            setTrackerUIState();
            startTrackerTicking();
