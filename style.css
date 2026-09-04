@@ -818,6 +818,13 @@ body.dark-mode #trackerStartStopBtn.tracking:hover {
  max-width: 480px;
  margin: 20px auto;
  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+ cursor: pointer;
+ transition: border-color 0.2s ease;
+}
+
+
+.today-breakdown-card:hover {
+ border-color: #f4a261;
 }
 
 
@@ -846,6 +853,60 @@ body.dark-mode .today-breakdown-card {
 
 .breakdown-container.compact .breakdown-legend {
  min-width: 160px;
+}
+
+
+#weekBreakdownContainer {
+ cursor: pointer;
+ border-radius: 16px;
+ padding: 10px;
+ transition: background-color 0.2s ease;
+}
+
+
+#weekBreakdownContainer:hover {
+ background-color: #faf6f0;
+}
+
+
+body.dark-mode #weekBreakdownContainer:hover {
+ background-color: #2e2520;
+}
+
+
+.chart-modal-box {
+ max-width: 640px;
+}
+
+
+.breakdown-container.large {
+ gap: 40px;
+ justify-content: center;
+}
+
+
+.breakdown-container.large .breakdown-chart {
+ width: 300px;
+ height: 300px;
+ flex-shrink: 0;
+}
+
+
+.breakdown-container.large .breakdown-chart::after {
+ width: 175px;
+ height: 175px;
+}
+
+
+.breakdown-container.large .breakdown-legend {
+ font-size: 16px;
+ gap: 14px;
+}
+
+
+.breakdown-container.large .breakdown-swatch {
+ width: 18px;
+ height: 18px;
 }
 
 
