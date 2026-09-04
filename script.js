@@ -1608,24 +1608,70 @@ function renderDonutChart(chartEl, legendEl, logsInRange) {
 }
 
 
-function renderStudyBreakdownCharts() {
-   const now = new Date();
-   const todayKey = dateKeyFor(now);
+// today's and this week's logged sessions, as reusable filters —
+// both the small persistent charts and the fullscreen modal draw
+// from these so they never fall out of sync with each other
+function getTodaysStudyLogs() {
+   const todayKey = dateKeyFor(new Date());
+   return studyLogs.filter(log => log.logged && dateKeyFor(new Date(log.logged)) === todayKey);
+}
 
 
-   const monday = getMondayOf(now);
+function getWeeksStudyLogs() {
+   const monday = getMondayOf(new Date());
    monday.setHours(0, 0, 0, 0);
    const mondayTimestamp = monday.getTime();
+   return studyLogs.filter(log => log.logged && log.logged >= mondayTimestamp);
+}
 
 
-   const todaysLogs = studyLogs.filter(log => log.logged && dateKeyFor(new Date(log.logged)) === todayKey);
-   const weeksLogs = studyLogs.filter(log => log.logged && log.logged >= mondayTimestamp);
-
-
-   renderDonutChart(breakdownChartDay, breakdownLegendDay, todaysLogs);
-   renderDonutChart(breakdownChartWeek, breakdownLegendWeek, weeksLogs);
+function renderStudyBreakdownCharts() {
+   renderDonutChart(breakdownChartDay, breakdownLegendDay, getTodaysStudyLogs());
+   renderDonutChart(breakdownChartWeek, breakdownLegendWeek, getWeeksStudyLogs());
 }
 renderStudyBreakdownCharts();
+
+
+// fullscreen chart modal — the small persistent "today" chart and
+// the "this week" chart are both cramped for reading exact percentages,
+// so clicking either opens a much larger version of the same data
+const todayBreakdownCard = document.getElementById('todayBreakdownCard');
+const weekBreakdownContainer = document.getElementById('weekBreakdownContainer');
+const chartModalOverlay = document.getElementById('chartModalOverlay');
+const chartModalTitle = document.getElementById('chartModalTitle');
+const chartModalChart = document.getElementById('chartModalChart');
+const chartModalLegend = document.getElementById('chartModalLegend');
+const chartModalClose = document.getElementById('chartModalClose');
+
+
+function openChartModal(title, logsInRange) {
+   if (chartModalTitle) chartModalTitle.textContent = title;
+   renderDonutChart(chartModalChart, chartModalLegend, logsInRange);
+   if (chartModalOverlay) chartModalOverlay.classList.remove('view-hidden');
+}
+
+
+function closeChartModal() {
+   if (chartModalOverlay) chartModalOverlay.classList.add('view-hidden');
+}
+
+
+if (todayBreakdownCard) {
+   todayBreakdownCard.addEventListener('click', () => openChartModal('today', getTodaysStudyLogs()));
+}
+
+
+if (weekBreakdownContainer) {
+   weekBreakdownContainer.addEventListener('click', () => openChartModal('this week', getWeeksStudyLogs()));
+}
+
+
+if (chartModalClose) chartModalClose.addEventListener('click', closeChartModal);
+if (chartModalOverlay) {
+   chartModalOverlay.addEventListener('click', (e) => {
+       if (e.target === chartModalOverlay) closeChartModal();
+   });
+}
 
 
 if (studyViewToggle) {
@@ -1707,12 +1753,10 @@ function setTrackerUIState() {
    if (activeTracking) {
        trackerStartStopBtn.textContent = 'stop';
        trackerStartStopBtn.classList.add('tracking');
-       if (trackerSubjectSelect) trackerSubjectSelect.disabled = true;
        if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = true;
    } else {
        trackerStartStopBtn.textContent = 'start';
        trackerStartStopBtn.classList.remove('tracking');
-       if (trackerSubjectSelect) trackerSubjectSelect.disabled = false;
        if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = false;
    }
 }
@@ -1761,6 +1805,37 @@ if (trackerStartStopBtn) {
            setTrackerUIState();
            updateTrackerDisplay();
        }
+   });
+}
+
+
+// switching the activity mid-session logs whatever was accumulated
+// under the old one (same 30-second minimum as a normal stop) and
+// immediately starts a fresh, zeroed session for the new activity —
+// no need to stop and start by hand to switch what you're tracking
+if (trackerSubjectSelect) {
+   trackerSubjectSelect.addEventListener('change', () => {
+       if (!activeTracking) return;
+       const newSubject = trackerSubjectSelect.value;
+       if (newSubject === activeTracking.subject) return;
+
+
+       const elapsedMs = Date.now() - activeTracking.startTime;
+       const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+
+       if (elapsedSeconds >= 30) {
+           const minutes = Math.max(1, Math.round(elapsedMs / 60000));
+           studyLogs.push({ subject: activeTracking.subject, minutes: minutes, logged: Date.now() });
+           localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
+           renderStudyLogs();
+           renderStudyBreakdownCharts();
+       }
+
+
+       activeTracking = { subject: newSubject, startTime: Date.now() };
+       localStorage.setItem('myActiveTracking', JSON.stringify(activeTracking));
+       updateTrackerDisplay();
    });
 }
 
