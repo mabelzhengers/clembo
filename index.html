@@ -41,37 +41,63 @@
          <div id="home-page" class="tab-content active">
              <h1 id="homeGreeting">welcome back</h1>
 
-             <div class="home-top-grid">
-                 <div class="mini-calendar-card">
-                     <h3 style="color: #e07a5f; margin-bottom: 12px;">this month</h3>
+             <div id="homeSortableContainer" class="sortable-container">
+
+                 <div class="draggable-card" data-drag-id="calendar">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>this month</span>
+                     </div>
                      <div id="miniCalendar"></div>
                  </div>
-                 <div class="reminders-card">
-                     <h3 style="color: #e07a5f; margin-bottom: 12px;">reminders</h3>
+
+                 <div class="draggable-card" data-drag-id="reminders">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>reminders</span>
+                     </div>
                      <textarea id="reminderArea" class="reminder-textarea" placeholder="a quote, a reminder, anything"></textarea>
                  </div>
+
+                 <div class="draggable-card" data-drag-id="countdown">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>countdown</span>
+                     </div>
+                     <div id="countdownContainer" class="home-grid"></div>
+                 </div>
+
+                 <div class="draggable-card" data-drag-id="todos">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>to-dos</span>
+                     </div>
+                     <ul id="homeTodoList">
+                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                     </ul>
+                 </div>
+
+                 <div class="draggable-card" data-drag-id="habits">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>habits</span>
+                     </div>
+                     <ul id="homeHabitList">
+                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                     </ul>
+                 </div>
+
+                 <div class="draggable-card" data-drag-id="events">
+                     <div class="draggable-card-header" draggable="true">
+                         <span class="drag-handle-dots"></span>
+                         <span>upcoming events</span>
+                     </div>
+                     <ul id="homeEventsList">
+                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                     </ul>
+                 </div>
+
              </div>
-          
-             <h3 style="color: #e07a5f; margin-top: 30px; margin-bottom: 12px;">countdown</h3>
-             <div id="countdownContainer" class="home-grid"></div>
-
-
-             <h3 style="color: #e07a5f; margin-top: 30px; margin-bottom: 12px;">to-dos</h3>
-             <ul id="homeTodoList">
-                 <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-             </ul>
-
-
-             <h3 style="color: #e07a5f; margin-top: 30px; margin-bottom: 12px;">habits</h3>
-             <ul id="homeHabitList">
-                 <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-             </ul>
-
-
-             <h3 style="color: #e07a5f; margin-top: 30px; margin-bottom: 12px;">upcoming events</h3>
-             <ul id="homeEventsList">
-                 <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-             </ul>
          </div>
 
 
@@ -253,25 +279,39 @@
              </div>
 
              <div id="schoolHomeView">
-                 <h3 style="color: #e07a5f; margin-bottom: 10px;">subjects</h3>
-                 <div class="input-area">
-                     <input type="text" id="newSchoolSubjectInput" placeholder="add a subject (ex. calculus)">
-                     <button id="addSchoolSubjectBtn">add</button>
-                 </div>
-                 <ul id="schoolSubjectManageList" style="margin-bottom: 25px;"></ul>
+                 <div id="schoolHomeSortableContainer" class="sortable-container">
 
-                 <h3 style="color: #e07a5f; margin-bottom: 10px;">scheduled study sessions</h3>
-                 <div class="school-schedule-form">
-                     <div class="input-area" style="margin-bottom: 10px;">
-                         <select id="scheduleSubjectSelect"></select>
+                     <div class="draggable-card" data-drag-id="subjects">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>subjects</span>
+                         </div>
+                         <div class="input-area">
+                             <input type="text" id="newSchoolSubjectInput" placeholder="add a subject (ex. calculus)">
+                             <button id="addSchoolSubjectBtn">add</button>
+                         </div>
+                         <ul id="schoolSubjectManageList"></ul>
                      </div>
-                     <div class="input-area">
-                         <input type="date" id="scheduleDateInput">
-                         <input type="time" id="scheduleTimeInput">
-                         <button id="addScheduleBtn">add</button>
+
+                     <div class="draggable-card" data-drag-id="schedule">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>scheduled study sessions</span>
+                         </div>
+                         <div class="school-schedule-form">
+                             <div class="input-area" style="margin-bottom: 10px;">
+                                 <select id="scheduleSubjectSelect"></select>
+                             </div>
+                             <div class="input-area">
+                                 <input type="date" id="scheduleDateInput">
+                                 <input type="time" id="scheduleTimeInput">
+                                 <button id="addScheduleBtn">add</button>
+                             </div>
+                         </div>
+                         <ul id="scheduleList"></ul>
                      </div>
+
                  </div>
-                 <ul id="scheduleList"></ul>
              </div>
 
              <div id="schoolSubjectView" class="view-hidden">
