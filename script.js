@@ -1700,6 +1700,7 @@ if (studyViewToggle) {
 // page gets reloaded mid-session.
 // ==========================================
 const trackerStartStopBtn = document.getElementById('trackerStartStopBtn');
+const trackerCancelBtn = document.getElementById('trackerCancelBtn');
 const trackerElapsedDisplay = document.getElementById('trackerElapsedDisplay');
 const trackerActiveLabel = document.getElementById('trackerActiveLabel');
 const trackFromLastLogCheckbox = document.getElementById('trackFromLastLogCheckbox');
@@ -1754,10 +1755,12 @@ function setTrackerUIState() {
        trackerStartStopBtn.textContent = 'stop';
        trackerStartStopBtn.classList.add('tracking');
        if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = true;
+       if (trackerCancelBtn) trackerCancelBtn.classList.remove('view-hidden');
    } else {
        trackerStartStopBtn.textContent = 'start';
        trackerStartStopBtn.classList.remove('tracking');
        if (trackFromLastLogCheckbox) trackFromLastLogCheckbox.disabled = false;
+       if (trackerCancelBtn) trackerCancelBtn.classList.add('view-hidden');
    }
 }
 
@@ -1798,21 +1801,40 @@ if (trackerStartStopBtn) {
            }
 
 
-           activeTracking = null;
-           localStorage.removeItem('myActiveTracking');
-           clearInterval(trackerIntervalId);
-           trackerIntervalId = null;
-           setTrackerUIState();
-           updateTrackerDisplay();
+           stopTrackingSession();
        }
    });
 }
 
 
-// switching the activity mid-session logs whatever was accumulated
-// under the old one (same 30-second minimum as a normal stop) and
-// immediately starts a fresh, zeroed session for the new activity —
-// no need to stop and start by hand to switch what you're tracking
+// tears down the active session locally without touching studyLogs —
+// shared by "stop" (after logging) and "cancel" (which skips logging)
+function stopTrackingSession() {
+   activeTracking = null;
+   localStorage.removeItem('myActiveTracking');
+   clearInterval(trackerIntervalId);
+   trackerIntervalId = null;
+   setTrackerUIState();
+   updateTrackerDisplay();
+}
+
+
+// cancel discards the whole session — no log entry gets created,
+// unlike "stop" which saves whatever time had accumulated
+if (trackerCancelBtn) {
+   trackerCancelBtn.addEventListener('click', () => {
+       if (!activeTracking) return;
+       if (!confirm("cancel this session? the time won't be logged.")) return;
+       stopTrackingSession();
+   });
+}
+
+
+// changing the activity mid-session just relabels the session in
+// place — the original start time and everything already elapsed
+// stay exactly as they are, nothing gets logged or split. this is
+// for correcting the label on the session you're already running,
+// not for switching to a new task (cancel/stop and start a new one for that)
 if (trackerSubjectSelect) {
    trackerSubjectSelect.addEventListener('change', () => {
        if (!activeTracking) return;
@@ -1820,20 +1842,7 @@ if (trackerSubjectSelect) {
        if (newSubject === activeTracking.subject) return;
 
 
-       const elapsedMs = Date.now() - activeTracking.startTime;
-       const elapsedSeconds = Math.floor(elapsedMs / 1000);
-
-
-       if (elapsedSeconds >= 30) {
-           const minutes = Math.max(1, Math.round(elapsedMs / 60000));
-           studyLogs.push({ subject: activeTracking.subject, minutes: minutes, logged: Date.now() });
-           localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
-           renderStudyLogs();
-           renderStudyBreakdownCharts();
-       }
-
-
-       activeTracking = { subject: newSubject, startTime: Date.now() };
+       activeTracking.subject = newSubject;
        localStorage.setItem('myActiveTracking', JSON.stringify(activeTracking));
        updateTrackerDisplay();
    });
