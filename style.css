@@ -1019,31 +1019,87 @@ body.dark-mode .countdown-card:hover {
 
 
 /* ==========================================
-  HOMEPAGE MINI CALENDAR & REMINDERS BUBBLE
+  DRAGGABLE / REORDERABLE CARDS
+  (used on the homepage and the school tab's
+  homepage view — grab a card's header to drag
+  it to a new position; order is remembered)
   ========================================== */
-.home-top-grid {
+.sortable-container {
  display: flex;
+ flex-direction: column;
  gap: 20px;
- flex-wrap: wrap;
- margin-bottom: 10px;
 }
 
 
-.mini-calendar-card,
-.reminders-card {
+.draggable-card {
  background: #faf6f0;
  border: 2px solid #ebdccb;
  border-radius: 12px;
  padding: 18px;
- flex: 1;
- min-width: 260px;
+ transition: border-color 0.15s ease, opacity 0.15s ease;
 }
 
 
-body.dark-mode .mini-calendar-card,
-body.dark-mode .reminders-card {
+body.dark-mode .draggable-card {
  background: #2e2520;
  border-color: #42352e;
+}
+
+
+.draggable-card.dragging {
+ opacity: 0.4;
+}
+
+
+.draggable-card.drag-over {
+ border-color: #f4a261;
+ box-shadow: 0 0 0 2px rgba(244, 162, 97, 0.3);
+}
+
+
+.draggable-card-header {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ font-size: 16px;
+ font-weight: 800;
+ color: #e07a5f;
+ text-transform: lowercase;
+ margin-bottom: 14px;
+ cursor: grab;
+ user-select: none;
+}
+
+
+.draggable-card-header:active {
+ cursor: grabbing;
+}
+
+
+.drag-handle-dots {
+ width: 4px;
+ height: 4px;
+ border-radius: 50%;
+ background-color: #c9b8a6;
+ box-shadow:
+   0 -6px 0 0 #c9b8a6,
+   0 6px 0 0 #c9b8a6,
+   -7px -6px 0 0 #c9b8a6,
+   -7px 0 0 0 #c9b8a6,
+   -7px 6px 0 0 #c9b8a6;
+ flex: none;
+ margin-left: 3px;
+}
+
+
+body.dark-mode .drag-handle-dots {
+ background-color: #6a5d51;
+ box-shadow:
+   0 -6px 0 0 #6a5d51,
+   0 6px 0 0 #6a5d51,
+   -7px -6px 0 0 #6a5d51,
+   -7px 0 0 0 #6a5d51,
+   -7px 6px 0 0 #6a5d51;
 }
 
 
