@@ -807,6 +807,33 @@ body.dark-mode #trackerStartStopBtn.tracking:hover {
 }
 
 
+#trackerCancelBtn {
+ background-color: #faf6f0 !important;
+ color: #8c7e70 !important;
+ border: 2px solid #ebdccb !important;
+ transition: all 0.2s ease;
+}
+
+
+#trackerCancelBtn:hover {
+ background-color: #ebdccb !important;
+ color: #4e443c !important;
+}
+
+
+body.dark-mode #trackerCancelBtn {
+ background-color: #42352e !important;
+ color: #bcae9e !important;
+ border-color: #54433a !important;
+}
+
+
+body.dark-mode #trackerCancelBtn:hover {
+ background-color: #54433a !important;
+ color: #f7eade !important;
+}
+
+
 /* ==========================================
   PERSISTENT "TODAY" BREAKDOWN CARD
   ========================================== */
