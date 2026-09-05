@@ -25,7 +25,8 @@
          <button class="tab-btn" data-tab="todo-page">to-dos</button>
          <button class="tab-btn" data-tab="habit-page">habits</button>
          <button class="tab-btn" data-tab="tracker-page">tracker</button>
-         <button class="tab-btn" data-tab="study-page">study</button>
+         <button class="tab-btn" data-tab="study-page">time</button>
+         <button class="tab-btn" data-tab="school-page">school</button>
          <button class="tab-btn" data-tab="health-page">health</button>
          <button class="tab-btn" data-tab="calendar-page">calendar</button>
          <button class="tab-btn" data-tab="dump-page">brain dump</button>
@@ -159,7 +160,7 @@
 
 
          <div id="study-page" class="tab-content">
-             <h1>study</h1>
+             <h1>time</h1>
 
              <div class="today-breakdown-card" id="todayBreakdownCard">
                  <h3 style="color: #e07a5f; margin-bottom: 12px;">today</h3>
@@ -240,6 +241,64 @@
                      <div class="breakdown-chart" id="breakdownChartWeek"></div>
                      <ul class="breakdown-legend" id="breakdownLegendWeek"></ul>
                  </div>
+             </div>
+         </div>
+
+
+         <div id="school-page" class="tab-content">
+             <h1>school</h1>
+
+             <div class="view-toggle" id="schoolNavToggle">
+                 <button class="view-toggle-btn active" data-view="home">homepage</button>
+             </div>
+
+             <div id="schoolHomeView">
+                 <h3 style="color: #e07a5f; margin-bottom: 10px;">subjects</h3>
+                 <div class="input-area">
+                     <input type="text" id="newSchoolSubjectInput" placeholder="add a subject (ex. calculus)">
+                     <button id="addSchoolSubjectBtn">add</button>
+                 </div>
+                 <ul id="schoolSubjectManageList" style="margin-bottom: 25px;"></ul>
+
+                 <h3 style="color: #e07a5f; margin-bottom: 10px;">scheduled study sessions</h3>
+                 <div class="school-schedule-form">
+                     <div class="input-area" style="margin-bottom: 10px;">
+                         <select id="scheduleSubjectSelect"></select>
+                     </div>
+                     <div class="input-area">
+                         <input type="date" id="scheduleDateInput">
+                         <input type="time" id="scheduleTimeInput">
+                         <button id="addScheduleBtn">add</button>
+                     </div>
+                 </div>
+                 <ul id="scheduleList"></ul>
+             </div>
+
+             <div id="schoolSubjectView" class="view-hidden">
+                 <h3 id="schoolSubjectPageTitle" style="color: #e07a5f; margin-bottom: 18px; text-align: center; font-size: 20px;"></h3>
+
+                 <h4 class="school-section-heading">to-dos</h4>
+                 <div class="input-area">
+                     <input type="text" id="schoolTaskInput" placeholder="add a task for this subject">
+                     <button id="addSchoolTaskBtn">add</button>
+                 </div>
+                 <ul id="schoolTaskList" style="margin-bottom: 25px;"></ul>
+
+                 <h4 class="school-section-heading">resources</h4>
+                 <div class="input-area">
+                     <input type="text" id="schoolResourceNameInput" placeholder="resource name (ex. online classroom)">
+                     <input type="text" id="schoolResourceUrlInput" placeholder="link (optional)">
+                     <button id="addSchoolResourceBtn">add</button>
+                 </div>
+                 <ul id="schoolResourceList" style="margin-bottom: 25px;"></ul>
+
+                 <h4 class="school-section-heading">upcoming tests</h4>
+                 <div class="input-area">
+                     <input type="text" id="schoolTestNameInput" placeholder="test name (ex. midterm)">
+                     <input type="date" id="schoolTestDateInput">
+                     <button id="addSchoolTestBtn">add</button>
+                 </div>
+                 <ul id="schoolTestList"></ul>
              </div>
          </div>
 
