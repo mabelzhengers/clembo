@@ -2969,3 +2969,86 @@ if (postDumpBtn && brainDumpArea) {
 
 
 renderDumpPosts();
+
+
+// ==========================================
+// draggable / reorderable cards — used on the
+// homepage and the school tab's homepage view.
+// grabbing a card's header and dropping it above
+// or below another card moves it there; the new
+// order is remembered per container in localStorage
+// ==========================================
+function saveSortableOrder(container, storageKey) {
+   const order = Array.from(container.querySelectorAll(':scope > .draggable-card')).map(c => c.getAttribute('data-drag-id'));
+   localStorage.setItem(storageKey, JSON.stringify(order));
+}
+
+
+function makeSortable(containerId, storageKey) {
+   const container = document.getElementById(containerId);
+   if (!container) return;
+
+
+   // restore a previously saved order, if there is one
+   const savedOrder = JSON.parse(localStorage.getItem(storageKey) || 'null');
+   if (savedOrder) {
+       savedOrder.forEach(id => {
+           const el = container.querySelector(`:scope > .draggable-card[data-drag-id="${id}"]`);
+           if (el) container.appendChild(el);
+       });
+   }
+
+
+   let draggedCard = null;
+
+
+   container.querySelectorAll(':scope > .draggable-card').forEach(card => {
+       const header = card.querySelector('.draggable-card-header');
+       if (!header) return;
+
+
+       header.addEventListener('dragstart', (e) => {
+           draggedCard = card;
+           card.classList.add('dragging');
+           e.dataTransfer.effectAllowed = 'move';
+           e.dataTransfer.setData('text/plain', card.getAttribute('data-drag-id') || '');
+       });
+
+
+       header.addEventListener('dragend', () => {
+           card.classList.remove('dragging');
+           container.querySelectorAll(':scope > .draggable-card').forEach(c => c.classList.remove('drag-over'));
+           draggedCard = null;
+           saveSortableOrder(container, storageKey);
+       });
+
+
+       card.addEventListener('dragover', (e) => {
+           if (!draggedCard || draggedCard === card) return;
+           e.preventDefault();
+           card.classList.add('drag-over');
+           const rect = card.getBoundingClientRect();
+           const isBelowMidpoint = e.clientY > rect.top + rect.height / 2;
+           if (isBelowMidpoint) {
+               container.insertBefore(draggedCard, card.nextSibling);
+           } else {
+               container.insertBefore(draggedCard, card);
+           }
+       });
+
+
+       card.addEventListener('dragleave', () => {
+           card.classList.remove('drag-over');
+       });
+
+
+       card.addEventListener('drop', (e) => {
+           e.preventDefault();
+           card.classList.remove('drag-over');
+       });
+   });
+}
+
+
+makeSortable('homeSortableContainer', 'myHomeCardOrder');
+makeSortable('schoolHomeSortableContainer', 'mySchoolHomeCardOrder');
