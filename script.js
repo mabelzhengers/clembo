@@ -191,13 +191,14 @@ function renderTasks() {
    // the newer fields) into the full shape before filtering/rendering
    myTasks.forEach((task, index) => {
        if (typeof task === 'string') {
-           myTasks[index] = { text: task, created: now, priority: 'medium', deadline: null, completed: false };
+           myTasks[index] = { text: task, created: now, priority: 'medium', deadline: null, completed: false, subject: null };
            return;
        }
        if (!task.created) task.created = now;
        if (!task.priority) task.priority = 'medium';
        if (task.deadline === undefined) task.deadline = null;
        if (task.completed === undefined) task.completed = false;
+       if (task.subject === undefined) task.subject = null;
    });
 
 
@@ -219,78 +220,95 @@ function renderTasks() {
 
 
    visibleTasks.forEach(({ task, index }) => {
-       const li = document.createElement('li');
-
-
-       const leftSide = document.createElement('div');
-       leftSide.className = 'task-left';
-
-
-       const checkbox = document.createElement('input');
-       checkbox.type = 'checkbox';
-       checkbox.className = 'task-checkbox';
-       checkbox.checked = task.completed;
-       checkbox.addEventListener('change', () => {
-           li.classList.add('task-complete');
-           setTimeout(() => {
-               task.completed = checkbox.checked;
-               localStorage.setItem('myTasks', JSON.stringify(myTasks));
-               renderTasks();
-           }, 220);
-       });
-
-
-       const textWrap = document.createElement('div');
-       textWrap.className = 'task-text-wrap';
-
-
-       const textSpan = document.createElement('span');
-       textSpan.className = 'task-text';
-       textSpan.textContent = task.text;
-       if (task.completed) textSpan.style.textDecoration = 'line-through';
-       textWrap.appendChild(textSpan);
-
-
-       if (task.deadline) {
-           const deadlineSpan = document.createElement('span');
-           deadlineSpan.className = 'task-deadline';
-           deadlineSpan.textContent = `due ${formatDeadlineDisplay(task.deadline)}`;
-           textWrap.appendChild(deadlineSpan);
-       }
-
-
-       leftSide.appendChild(checkbox);
-       leftSide.appendChild(textWrap);
-       li.appendChild(leftSide);
-
-
-       const rightSide = document.createElement('div');
-       rightSide.className = 'task-right';
-
-
-       if (!task.completed) {
-           const daysOverdue = calendarDaysBetween(new Date(task.created), new Date(now));
-           if (daysOverdue > 0) {
-               const badge = document.createElement('span');
-               badge.className = 'overdue-badge';
-               badge.textContent = `(-${daysOverdue})`;
-               rightSide.appendChild(badge);
-           }
-       }
-
-
-       const priorityBadge = document.createElement('span');
-       priorityBadge.className = `priority-badge priority-${task.priority}`;
-       priorityBadge.textContent = task.priority;
-       rightSide.appendChild(priorityBadge);
-
-
-       li.appendChild(rightSide);
-       taskList.appendChild(li);
+       taskList.appendChild(buildTaskListItem(task, index, renderTasks));
    });
 
 
    renderHomeTodos();
+}
+
+
+// builds one <li> for a task — shared by the main to-do list and by
+// each school subject page's own (filtered) to-do list, so checkbox,
+// priority, deadline, and overdue-badge behavior stay identical everywhere
+function buildTaskListItem(task, index, onChanged) {
+   const now = Date.now();
+   const li = document.createElement('li');
+
+
+   const leftSide = document.createElement('div');
+   leftSide.className = 'task-left';
+
+
+   const checkbox = document.createElement('input');
+   checkbox.type = 'checkbox';
+   checkbox.className = 'task-checkbox';
+   checkbox.checked = task.completed;
+   checkbox.addEventListener('change', () => {
+       li.classList.add('task-complete');
+       setTimeout(() => {
+           task.completed = checkbox.checked;
+           localStorage.setItem('myTasks', JSON.stringify(myTasks));
+           if (onChanged) onChanged();
+       }, 220);
+   });
+
+
+   const textWrap = document.createElement('div');
+   textWrap.className = 'task-text-wrap';
+
+
+   const textSpan = document.createElement('span');
+   textSpan.className = 'task-text';
+   textSpan.textContent = task.text;
+   if (task.completed) textSpan.style.textDecoration = 'line-through';
+   textWrap.appendChild(textSpan);
+
+
+   if (task.deadline) {
+       const deadlineSpan = document.createElement('span');
+       deadlineSpan.className = 'task-deadline';
+       deadlineSpan.textContent = `due ${formatDeadlineDisplay(task.deadline)}`;
+       textWrap.appendChild(deadlineSpan);
+   }
+
+
+   leftSide.appendChild(checkbox);
+   leftSide.appendChild(textWrap);
+   li.appendChild(leftSide);
+
+
+   const rightSide = document.createElement('div');
+   rightSide.className = 'task-right';
+
+
+   if (task.subject) {
+       const subjectTag = document.createElement('span');
+       subjectTag.className = 'subject-tag';
+       subjectTag.textContent = task.subject;
+       rightSide.appendChild(subjectTag);
+   }
+
+
+   if (!task.completed) {
+       const daysOverdue = calendarDaysBetween(new Date(task.created), new Date(now));
+       if (daysOverdue > 0) {
+           const badge = document.createElement('span');
+           badge.className = 'overdue-badge';
+           badge.textContent = `(-${daysOverdue})`;
+           rightSide.appendChild(badge);
+       }
+   }
+
+
+   const priorityBadge = document.createElement('span');
+   priorityBadge.className = `priority-badge priority-${task.priority}`;
+   priorityBadge.textContent = task.priority;
+   rightSide.appendChild(priorityBadge);
+
+
+   li.appendChild(rightSide);
+   return li;
 }
 
 
@@ -322,7 +340,7 @@ if (addBtn && taskInput) {
        if (val !== "") {
            const priority = taskPrioritySelect ? taskPrioritySelect.value : 'medium';
            const deadline = (taskDeadlineInput && taskDeadlineInput.value) ? taskDeadlineInput.value : null;
-           myTasks.push({ text: val, created: Date.now(), priority: priority, deadline: deadline, completed: false });
+           myTasks.push({ text: val, created: Date.now(), priority: priority, deadline: deadline, completed: false, subject: null });
            localStorage.setItem('myTasks', JSON.stringify(myTasks));
            taskInput.value = "";
            if (taskDeadlineInput) taskDeadlineInput.value = "";
@@ -2374,6 +2392,495 @@ function renderGymStreak() {
 renderGymSplit();
 renderGymMiniCalendar();
 renderGymStreak();
+
+
+// ==========================================
+// school tab — a homepage for scheduling study
+// sessions and managing subject pages. each subject
+// page has its own to-dos (which also show up,
+// tagged, under the main to-dos tab via the shared
+// myTasks list), study resources, and test dates
+// (which also show up in the homepage/settings
+// countdowns, since they share the trackedDates list)
+// ==========================================
+const schoolNavToggle = document.getElementById('schoolNavToggle');
+const schoolHomeView = document.getElementById('schoolHomeView');
+const schoolSubjectView = document.getElementById('schoolSubjectView');
+const schoolSubjectPageTitle = document.getElementById('schoolSubjectPageTitle');
+
+
+const newSchoolSubjectInput = document.getElementById('newSchoolSubjectInput');
+const addSchoolSubjectBtn = document.getElementById('addSchoolSubjectBtn');
+const schoolSubjectManageList = document.getElementById('schoolSubjectManageList');
+
+
+const scheduleSubjectSelect = document.getElementById('scheduleSubjectSelect');
+const scheduleDateInput = document.getElementById('scheduleDateInput');
+const scheduleTimeInput = document.getElementById('scheduleTimeInput');
+const addScheduleBtn = document.getElementById('addScheduleBtn');
+const scheduleList = document.getElementById('scheduleList');
+
+
+const schoolTaskInput = document.getElementById('schoolTaskInput');
+const addSchoolTaskBtn = document.getElementById('addSchoolTaskBtn');
+const schoolTaskList = document.getElementById('schoolTaskList');
+
+
+const schoolResourceNameInput = document.getElementById('schoolResourceNameInput');
+const schoolResourceUrlInput = document.getElementById('schoolResourceUrlInput');
+const addSchoolResourceBtn = document.getElementById('addSchoolResourceBtn');
+const schoolResourceList = document.getElementById('schoolResourceList');
+
+
+const schoolTestNameInput = document.getElementById('schoolTestNameInput');
+const schoolTestDateInput = document.getElementById('schoolTestDateInput');
+const addSchoolTestBtn = document.getElementById('addSchoolTestBtn');
+const schoolTestList = document.getElementById('schoolTestList');
+
+
+let schoolSubjects = JSON.parse(localStorage.getItem('mySchoolSubjects')) || [];
+let schoolResources = JSON.parse(localStorage.getItem('mySchoolResources')) || {};
+let schoolSchedule = JSON.parse(localStorage.getItem('mySchoolSchedule')) || [];
+let currentSchoolSubject = null;
+
+
+function renderSchoolNav() {
+   if (!schoolNavToggle) return;
+   const activeView = currentSchoolSubject === null ? 'home' : currentSchoolSubject;
+   schoolNavToggle.innerHTML = "";
+
+
+   const homeBtn = document.createElement('button');
+   homeBtn.className = 'view-toggle-btn' + (activeView === 'home' ? ' active' : '');
+   homeBtn.textContent = 'homepage';
+   homeBtn.addEventListener('click', () => openSchoolHome());
+   schoolNavToggle.appendChild(homeBtn);
+
+
+   schoolSubjects.forEach(subject => {
+       const btn = document.createElement('button');
+       btn.className = 'view-toggle-btn' + (activeView === subject ? ' active' : '');
+       btn.textContent = subject;
+       btn.addEventListener('click', () => openSchoolSubjectPage(subject));
+       schoolNavToggle.appendChild(btn);
+   });
+}
+
+
+function openSchoolHome() {
+   currentSchoolSubject = null;
+   if (schoolHomeView) schoolHomeView.classList.remove('view-hidden');
+   if (schoolSubjectView) schoolSubjectView.classList.add('view-hidden');
+   renderSchoolNav();
+}
+
+
+function openSchoolSubjectPage(subject) {
+   currentSchoolSubject = subject;
+   if (schoolHomeView) schoolHomeView.classList.add('view-hidden');
+   if (schoolSubjectView) schoolSubjectView.classList.remove('view-hidden');
+   if (schoolSubjectPageTitle) schoolSubjectPageTitle.textContent = subject;
+   renderSchoolNav();
+   renderSchoolSubjectTasks();
+   renderSchoolResourceList();
+   renderSchoolTestList();
+}
+
+
+function renderSchoolSubjectManageList() {
+   if (!schoolSubjectManageList) return;
+   schoolSubjectManageList.innerHTML = "";
+
+
+   if (schoolSubjects.length === 0) {
+       schoolSubjectManageList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">no subjects yet</li>`;
+       return;
+   }
+
+
+   schoolSubjects.forEach((subject, index) => {
+       const li = document.createElement('li');
+       const span = document.createElement('span');
+       span.textContent = subject;
+       li.appendChild(span);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           if (!confirm(`remove "${subject}" and everything on its page (to-dos, resources, tests)?`)) return;
+
+
+           schoolSubjects.splice(index, 1);
+           localStorage.setItem('mySchoolSubjects', JSON.stringify(schoolSubjects));
+
+
+           delete schoolResources[subject];
+           localStorage.setItem('mySchoolResources', JSON.stringify(schoolResources));
+
+
+           myTasks = myTasks.filter(t => (typeof t === 'string' ? true : t.subject !== subject));
+           localStorage.setItem('myTasks', JSON.stringify(myTasks));
+
+
+           trackedDates = trackedDates.filter(d => d.schoolSubject !== subject);
+           localStorage.setItem('trackedDates', JSON.stringify(trackedDates));
+
+
+           schoolSchedule = schoolSchedule.filter(s => s.subject !== subject);
+           localStorage.setItem('mySchoolSchedule', JSON.stringify(schoolSchedule));
+
+
+           renderSchoolSubjectManageList();
+           renderScheduleSubjectSelect();
+           renderScheduleList();
+           renderTasks();
+           calculateCountdowns();
+
+
+           if (currentSchoolSubject === subject) {
+               openSchoolHome();
+           } else {
+               renderSchoolNav();
+           }
+       });
+       li.appendChild(delBtn);
+       schoolSubjectManageList.appendChild(li);
+   });
+}
+
+
+if (addSchoolSubjectBtn && newSchoolSubjectInput) {
+   addSchoolSubjectBtn.addEventListener('click', () => {
+       const val = newSchoolSubjectInput.value.trim().toLowerCase();
+       if (val !== "" && !schoolSubjects.includes(val)) {
+           schoolSubjects.push(val);
+           localStorage.setItem('mySchoolSubjects', JSON.stringify(schoolSubjects));
+           newSchoolSubjectInput.value = "";
+           renderSchoolSubjectManageList();
+           renderScheduleSubjectSelect();
+           renderSchoolNav();
+       }
+   });
+}
+
+
+function renderScheduleSubjectSelect() {
+   if (!scheduleSubjectSelect) return;
+   const previousValue = scheduleSubjectSelect.value;
+   scheduleSubjectSelect.innerHTML = "";
+   schoolSubjects.forEach(subject => {
+       const option = document.createElement('option');
+       option.value = subject;
+       option.textContent = subject;
+       scheduleSubjectSelect.appendChild(option);
+   });
+   if (schoolSubjects.includes(previousValue)) scheduleSubjectSelect.value = previousValue;
+}
+
+
+function formatScheduleDate(dateStr) {
+   const parts = dateStr.split('-');
+   if (parts.length !== 3) return dateStr;
+   const [yyyy, mm, dd] = parts;
+   return `${mm}-${dd}-${yyyy}`;
+}
+
+
+function formatScheduleTime(timeStr) {
+   if (!timeStr) return "";
+   const [hStr, mStr] = timeStr.split(':');
+   let hours = parseInt(hStr);
+   const ampm = hours >= 12 ? 'pm' : 'am';
+   hours = hours % 12;
+   if (hours === 0) hours = 12;
+   return `${hours}:${mStr}${ampm}`;
+}
+
+
+function renderScheduleList() {
+   if (!scheduleList) return;
+   scheduleList.innerHTML = "";
+
+
+   if (schoolSchedule.length === 0) {
+       scheduleList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing scheduled yet</li>`;
+       return;
+   }
+
+
+   const sorted = schoolSchedule
+       .map((session, index) => ({ session, index }))
+       .sort((a, b) => `${a.session.date}T${a.session.time || '00:00'}`.localeCompare(`${b.session.date}T${b.session.time || '00:00'}`));
+
+
+   sorted.forEach(({ session, index }) => {
+       const li = document.createElement('li');
+       li.className = 'schedule-item';
+
+
+       const info = document.createElement('span');
+       const subjectSpan = document.createElement('span');
+       subjectSpan.className = 'schedule-item-subject';
+       subjectSpan.textContent = session.subject;
+       info.appendChild(subjectSpan);
+       info.appendChild(document.createTextNode(
+           `${formatScheduleDate(session.date)}${session.time ? ' · ' + formatScheduleTime(session.time) : ''}`
+       ));
+       li.appendChild(info);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           schoolSchedule.splice(index, 1);
+           localStorage.setItem('mySchoolSchedule', JSON.stringify(schoolSchedule));
+           renderScheduleList();
+       });
+       li.appendChild(delBtn);
+
+
+       scheduleList.appendChild(li);
+   });
+}
+
+
+if (addScheduleBtn) {
+   addScheduleBtn.addEventListener('click', () => {
+       if (schoolSubjects.length === 0) {
+           alert("add a subject first.");
+           return;
+       }
+       if (!scheduleDateInput || !scheduleDateInput.value) {
+           alert("pick a date.");
+           return;
+       }
+       const subject = scheduleSubjectSelect ? scheduleSubjectSelect.value : schoolSubjects[0];
+       const dateVal = scheduleDateInput.value;
+       const timeVal = scheduleTimeInput ? scheduleTimeInput.value : "";
+
+
+       schoolSchedule.push({ subject: subject, date: dateVal, time: timeVal });
+       localStorage.setItem('mySchoolSchedule', JSON.stringify(schoolSchedule));
+       scheduleDateInput.value = "";
+       if (scheduleTimeInput) scheduleTimeInput.value = "";
+       renderScheduleList();
+   });
+}
+
+
+// ---- per-subject to-dos (reuses myTasks + buildTaskListItem, so
+// checkbox/priority/deadline/overdue behavior matches the to-dos tab) ----
+function renderSchoolSubjectTasks() {
+   if (!schoolTaskList || !currentSchoolSubject) return;
+   schoolTaskList.innerHTML = "";
+
+
+   const matching = myTasks
+       .map((task, index) => ({ task, index }))
+       .filter(({ task }) => typeof task !== 'string' && task.subject === currentSchoolSubject);
+
+
+   if (matching.length === 0) {
+       schoolTaskList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing yet</li>`;
+       return;
+   }
+
+
+   matching.forEach(({ task, index }) => {
+       schoolTaskList.appendChild(buildTaskListItem(task, index, () => {
+           renderSchoolSubjectTasks();
+           renderTasks();
+       }));
+   });
+}
+
+
+if (addSchoolTaskBtn && schoolTaskInput) {
+   addSchoolTaskBtn.addEventListener('click', () => {
+       if (!currentSchoolSubject) return;
+       const val = schoolTaskInput.value.trim();
+       if (val !== "") {
+           myTasks.push({
+               text: val,
+               created: Date.now(),
+               priority: 'medium',
+               deadline: null,
+               completed: false,
+               subject: currentSchoolSubject
+           });
+           localStorage.setItem('myTasks', JSON.stringify(myTasks));
+           schoolTaskInput.value = "";
+           renderSchoolSubjectTasks();
+           renderTasks();
+       }
+   });
+}
+
+
+// ---- per-subject resources ----
+function renderSchoolResourceList() {
+   if (!schoolResourceList || !currentSchoolSubject) return;
+   schoolResourceList.innerHTML = "";
+
+
+   const resources = schoolResources[currentSchoolSubject] || [];
+
+
+   if (resources.length === 0) {
+       schoolResourceList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing yet</li>`;
+       return;
+   }
+
+
+   resources.forEach((resource, index) => {
+       const li = document.createElement('li');
+
+
+       if (resource.url) {
+           const link = document.createElement('a');
+           link.className = 'resource-item-link';
+           link.href = resource.url;
+           link.target = '_blank';
+           link.rel = 'noopener noreferrer';
+           link.textContent = resource.name;
+           li.appendChild(link);
+       } else {
+           const span = document.createElement('span');
+           span.textContent = resource.name;
+           li.appendChild(span);
+       }
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           resources.splice(index, 1);
+           localStorage.setItem('mySchoolResources', JSON.stringify(schoolResources));
+           renderSchoolResourceList();
+       });
+       li.appendChild(delBtn);
+
+
+       schoolResourceList.appendChild(li);
+   });
+}
+
+
+if (addSchoolResourceBtn && schoolResourceNameInput) {
+   addSchoolResourceBtn.addEventListener('click', () => {
+       if (!currentSchoolSubject) return;
+       const name = schoolResourceNameInput.value.trim();
+       let url = schoolResourceUrlInput ? schoolResourceUrlInput.value.trim() : "";
+       if (url && !/^https?:\/\//i.test(url)) url = `https://${url}`;
+
+
+       if (name !== "") {
+           if (!schoolResources[currentSchoolSubject]) schoolResources[currentSchoolSubject] = [];
+           schoolResources[currentSchoolSubject].push({ name: name, url: url || null });
+           localStorage.setItem('mySchoolResources', JSON.stringify(schoolResources));
+           schoolResourceNameInput.value = "";
+           if (schoolResourceUrlInput) schoolResourceUrlInput.value = "";
+           renderSchoolResourceList();
+       }
+   });
+}
+
+
+// ---- per-subject upcoming tests — these are stored right in
+// trackedDates (tagged with schoolSubject + a unique id), so they
+// automatically also show up in the homepage countdown grid and
+// the settings date list without any extra wiring ----
+function renderSchoolTestList() {
+   if (!schoolTestList || !currentSchoolSubject) return;
+   schoolTestList.innerHTML = "";
+
+
+   const matching = trackedDates.filter(d => d.schoolSubject === currentSchoolSubject);
+
+
+   if (matching.length === 0) {
+       schoolTestList.innerHTML = `<li style="color:#aaa; text-align:center; display:block;">nothing yet</li>`;
+       return;
+   }
+
+
+   matching.forEach(item => {
+       const target = new Date(item.date).getTime();
+       const now = new Date().getTime();
+       const daysLeft = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+       const displayDays = daysLeft > 0 ? `${daysLeft} days` : (daysLeft === 0 ? "today!" : "passed");
+
+
+       const li = document.createElement('li');
+
+
+       const leftSide = document.createElement('div');
+       leftSide.style.display = 'flex';
+       leftSide.style.alignItems = 'center';
+       leftSide.style.gap = '10px';
+
+
+       const span = document.createElement('span');
+       span.textContent = `${item.name}: ${item.date}`;
+       leftSide.appendChild(span);
+
+
+       const daysTag = document.createElement('span');
+       daysTag.className = 'test-item-days';
+       daysTag.textContent = displayDays;
+       leftSide.appendChild(daysTag);
+
+
+       li.appendChild(leftSide);
+
+
+       const delBtn = document.createElement('button');
+       delBtn.textContent = 'x';
+       delBtn.className = 'delete-btn';
+       delBtn.addEventListener('click', () => {
+           trackedDates = trackedDates.filter(d => d.id !== item.id);
+           localStorage.setItem('trackedDates', JSON.stringify(trackedDates));
+           renderSchoolTestList();
+           calculateCountdowns();
+       });
+       li.appendChild(delBtn);
+
+
+       schoolTestList.appendChild(li);
+   });
+}
+
+
+if (addSchoolTestBtn && schoolTestNameInput) {
+   addSchoolTestBtn.addEventListener('click', () => {
+       if (!currentSchoolSubject) return;
+       const name = schoolTestNameInput.value.trim();
+       const dateVal = schoolTestDateInput ? schoolTestDateInput.value : "";
+       if (name !== "" && dateVal !== "") {
+           trackedDates.push({
+               name: `${currentSchoolSubject}: ${name}`,
+               date: dateVal,
+               schoolSubject: currentSchoolSubject,
+               id: Date.now() + Math.random()
+           });
+           localStorage.setItem('trackedDates', JSON.stringify(trackedDates));
+           schoolTestNameInput.value = "";
+           if (schoolTestDateInput) schoolTestDateInput.value = "";
+           renderSchoolTestList();
+           calculateCountdowns();
+       }
+   });
+}
+
+
+renderSchoolNav();
+renderSchoolSubjectManageList();
+renderScheduleSubjectSelect();
+renderScheduleList();
 
 
 // ==========================================
