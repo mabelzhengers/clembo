@@ -1792,7 +1792,12 @@ body.dark-mode .breakdown-legend-item {
 #addExamBtn,
 #addDietFoodBtn,
 #saveGymMuscleGroupBtn,
-#addGymExerciseBtn {
+#addGymExerciseBtn,
+#addSchoolSubjectBtn,
+#addScheduleBtn,
+#addSchoolTaskBtn,
+#addSchoolResourceBtn,
+#addSchoolTestBtn {
  background-color: #4a7c59 !important; /* Fresh leaf green */
  color: #ffffff !important;            /* Crisp white text */
  border: none !important;
@@ -1812,7 +1817,12 @@ body.dark-mode .breakdown-legend-item {
 #addExamBtn:hover,
 #addDietFoodBtn:hover,
 #saveGymMuscleGroupBtn:hover,
-#addGymExerciseBtn:hover {
+#addGymExerciseBtn:hover,
+#addSchoolSubjectBtn:hover,
+#addScheduleBtn:hover,
+#addSchoolTaskBtn:hover,
+#addSchoolResourceBtn:hover,
+#addSchoolTestBtn:hover {
  background-color: #3b6346 !important; /* Slightly deeper green on hover */
 }
 
@@ -1828,7 +1838,12 @@ body.dark-mode #saveUsernameBtn,
 body.dark-mode #addExamBtn,
 body.dark-mode #addDietFoodBtn,
 body.dark-mode #saveGymMuscleGroupBtn,
-body.dark-mode #addGymExerciseBtn {
+body.dark-mode #addGymExerciseBtn,
+body.dark-mode #addSchoolSubjectBtn,
+body.dark-mode #addScheduleBtn,
+body.dark-mode #addSchoolTaskBtn,
+body.dark-mode #addSchoolResourceBtn,
+body.dark-mode #addSchoolTestBtn {
  background-color: #5c9c6f !important; /* Softer, glowing leaf green for dark mode */
  color: #ffffff !important;
 }
@@ -1845,7 +1860,12 @@ body.dark-mode #saveUsernameBtn:hover,
 body.dark-mode #addExamBtn:hover,
 body.dark-mode #addDietFoodBtn:hover,
 body.dark-mode #saveGymMuscleGroupBtn:hover,
-body.dark-mode #addGymExerciseBtn:hover {
+body.dark-mode #addGymExerciseBtn:hover,
+body.dark-mode #addSchoolSubjectBtn:hover,
+body.dark-mode #addScheduleBtn:hover,
+body.dark-mode #addSchoolTaskBtn:hover,
+body.dark-mode #addSchoolResourceBtn:hover,
+body.dark-mode #addSchoolTestBtn:hover {
  background-color: #4a7c59 !important; /* Darker green on hover in dark mode */
 }
 
@@ -2225,6 +2245,100 @@ body.dark-mode .water-count-value {
 
 body.dark-mode .water-counter-caption {
  color: #bcae9e;
+}
+
+
+/* ==========================================
+  SCHOOL TAB
+  ========================================== */
+.school-section-heading {
+ margin-top: 25px;
+ margin-bottom: 10px;
+ color: #e07a5f;
+}
+
+
+.subject-tag {
+ display: inline-block;
+ font-size: 11px;
+ font-weight: 800;
+ color: #ffffff;
+ background-color: #8c7e70;
+ padding: 4px 10px;
+ border-radius: 12px;
+ text-transform: lowercase;
+ flex: none;
+}
+
+
+body.dark-mode .subject-tag {
+ background-color: #6a5d51;
+}
+
+
+.school-schedule-form {
+ background: #faf6f0;
+ border: 2px solid #ebdccb;
+ border-radius: 12px;
+ padding: 16px;
+ margin-bottom: 15px;
+}
+
+
+body.dark-mode .school-schedule-form {
+ background: #2e2520;
+ border-color: #42352e;
+}
+
+
+.schedule-item {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+}
+
+
+.schedule-item-subject {
+ font-weight: 800;
+ color: #e07a5f;
+ text-transform: lowercase;
+ margin-right: 8px;
+}
+
+
+.resource-item-link {
+ color: #4a7c59;
+ font-weight: 700;
+ text-decoration: none;
+}
+
+
+.resource-item-link:hover {
+ text-decoration: underline;
+}
+
+
+body.dark-mode .resource-item-link {
+ color: #5c9c6f;
+}
+
+
+.test-item-days {
+ font-size: 12px;
+ font-weight: 800;
+ color: #e07a5f;
+ background: #faf6f0;
+ border: 1px solid #ebdccb;
+ border-radius: 12px;
+ padding: 3px 10px;
+ flex: none;
+}
+
+
+body.dark-mode .test-item-days {
+ color: #f4a261;
+ background: #2e2520;
+ border-color: #42352e;
 }
 
 
