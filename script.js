@@ -2973,14 +2973,89 @@ renderDumpPosts();
 
 // ==========================================
 // draggable / reorderable cards — used on the
-// homepage and the school tab's homepage view.
-// grabbing a card's header and dropping it above
-// or below another card moves it there; the new
-// order is remembered per container in localStorage
+// homepage, the school tab's homepage view, and
+// each subject page. cards live inside ".card-row"
+// wrappers; a row can hold one card (full width) or
+// two (side by side). dropping near the left/right
+// edge of a card places the dragged card beside it;
+// dropping near the top/bottom edge puts it in its
+// own new row above/below. layout is remembered
+// per container in localStorage.
 // ==========================================
+function getDropZone(e, rect) {
+   const xFrac = (e.clientX - rect.left) / rect.width;
+   const yFrac = (e.clientY - rect.top) / rect.height;
+   if (xFrac < 0.25) return 'left';
+   if (xFrac > 0.75) return 'right';
+   return yFrac < 0.5 ? 'top' : 'bottom';
+}
+
+
+// removes a card from whichever row it's currently in, and deletes
+// that row if it's left empty — used before moving the card elsewhere
+function detachCard(card) {
+   const oldRow = card.parentElement;
+   if (oldRow && oldRow.classList.contains('card-row')) {
+       oldRow.removeChild(card);
+       if (oldRow.children.length === 0) oldRow.remove();
+   }
+}
+
+
 function saveSortableOrder(container, storageKey) {
-   const order = Array.from(container.querySelectorAll(':scope > .draggable-card')).map(c => c.getAttribute('data-drag-id'));
-   localStorage.setItem(storageKey, JSON.stringify(order));
+   const rows = Array.from(container.querySelectorAll(':scope > .card-row')).map(row =>
+       Array.from(row.querySelectorAll(':scope > .draggable-card')).map(c => c.getAttribute('data-drag-id'))
+   );
+   localStorage.setItem(storageKey, JSON.stringify(rows));
+}
+
+
+// rebuilds the row/card layout from a saved [[id], [id, id], ...]
+// structure; any card not mentioned (e.g. newly added since the
+// layout was saved) gets appended as its own row at the end
+function restoreSortableLayout(container, storageKey) {
+   const savedRows = JSON.parse(localStorage.getItem(storageKey) || 'null');
+   if (!savedRows) return;
+
+
+   const cardsById = {};
+   container.querySelectorAll(':scope .draggable-card').forEach(card => {
+       cardsById[card.getAttribute('data-drag-id')] = card;
+   });
+
+
+   container.querySelectorAll(':scope > .card-row').forEach(row => row.remove());
+
+
+   const placed = new Set();
+   savedRows.forEach(rowIds => {
+       const validIds = rowIds.filter(id => cardsById[id]);
+       if (validIds.length === 0) return;
+       const row = document.createElement('div');
+       row.className = 'card-row';
+       validIds.forEach(id => {
+           row.appendChild(cardsById[id]);
+           placed.add(id);
+       });
+       container.appendChild(row);
+   });
+
+
+   Object.keys(cardsById).forEach(id => {
+       if (!placed.has(id)) {
+           const row = document.createElement('div');
+           row.className = 'card-row';
+           row.appendChild(cardsById[id]);
+           container.appendChild(row);
+       }
+   });
+}
+
+
+function clearDragOverClasses(container) {
+   container.querySelectorAll(':scope .draggable-card').forEach(c => {
+       c.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-top', 'drag-over-bottom');
+   });
 }
 
 
@@ -2989,20 +3064,13 @@ function makeSortable(containerId, storageKey) {
    if (!container) return;
 
 
-   // restore a previously saved order, if there is one
-   const savedOrder = JSON.parse(localStorage.getItem(storageKey) || 'null');
-   if (savedOrder) {
-       savedOrder.forEach(id => {
-           const el = container.querySelector(`:scope > .draggable-card[data-drag-id="${id}"]`);
-           if (el) container.appendChild(el);
-       });
-   }
+   restoreSortableLayout(container, storageKey);
 
 
    let draggedCard = null;
 
 
-   container.querySelectorAll(':scope > .draggable-card').forEach(card => {
+   container.querySelectorAll(':scope .draggable-card').forEach(card => {
        const header = card.querySelector('.draggable-card-header');
        if (!header) return;
 
@@ -3017,7 +3085,7 @@ function makeSortable(containerId, storageKey) {
 
        header.addEventListener('dragend', () => {
            card.classList.remove('dragging');
-           container.querySelectorAll(':scope > .draggable-card').forEach(c => c.classList.remove('drag-over'));
+           clearDragOverClasses(container);
            draggedCard = null;
            saveSortableOrder(container, storageKey);
        });
@@ -3026,25 +3094,59 @@ function makeSortable(containerId, storageKey) {
        card.addEventListener('dragover', (e) => {
            if (!draggedCard || draggedCard === card) return;
            e.preventDefault();
-           card.classList.add('drag-over');
+
+
            const rect = card.getBoundingClientRect();
-           const isBelowMidpoint = e.clientY > rect.top + rect.height / 2;
-           if (isBelowMidpoint) {
-               container.insertBefore(draggedCard, card.nextSibling);
+           const zone = getDropZone(e, rect);
+
+
+           clearDragOverClasses(container);
+           card.classList.add(`drag-over-${zone}`);
+
+
+           const targetRow = card.parentElement;
+
+
+           if (zone === 'left' || zone === 'right') {
+               const otherCardsInRow = Array.from(targetRow.querySelectorAll(':scope > .draggable-card'))
+                   .filter(c => c !== draggedCard && c !== card);
+               if (otherCardsInRow.length > 0) {
+                   // row is already full with a different card — fall back
+                   // to placing the dragged card as its own row instead
+                   detachCard(draggedCard);
+                   const newRow = document.createElement('div');
+                   newRow.className = 'card-row';
+                   newRow.appendChild(draggedCard);
+                   targetRow.parentNode.insertBefore(newRow, zone === 'left' ? targetRow : targetRow.nextSibling);
+                   return;
+               }
+               detachCard(draggedCard);
+               if (zone === 'left') {
+                   targetRow.insertBefore(draggedCard, card);
+               } else {
+                   targetRow.insertBefore(draggedCard, card.nextSibling);
+               }
            } else {
-               container.insertBefore(draggedCard, card);
+               detachCard(draggedCard);
+               const newRow = document.createElement('div');
+               newRow.className = 'card-row';
+               newRow.appendChild(draggedCard);
+               if (zone === 'top') {
+                   targetRow.parentNode.insertBefore(newRow, targetRow);
+               } else {
+                   targetRow.parentNode.insertBefore(newRow, targetRow.nextSibling);
+               }
            }
        });
 
 
        card.addEventListener('dragleave', () => {
-           card.classList.remove('drag-over');
+           card.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-top', 'drag-over-bottom');
        });
 
 
        card.addEventListener('drop', (e) => {
            e.preventDefault();
-           card.classList.remove('drag-over');
        });
    });
 }
@@ -3052,3 +3154,4 @@ function makeSortable(containerId, storageKey) {
 
 makeSortable('homeSortableContainer', 'myHomeCardOrder');
 makeSortable('schoolHomeSortableContainer', 'mySchoolHomeCardOrder');
+makeSortable('schoolSubjectSortableContainer', 'mySchoolSubjectCardOrder');
