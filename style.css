@@ -1020,14 +1020,31 @@ body.dark-mode .countdown-card:hover {
 
 /* ==========================================
   DRAGGABLE / REORDERABLE CARDS
-  (used on the homepage and the school tab's
-  homepage view — grab a card's header to drag
-  it to a new position; order is remembered)
+  (used on the homepage, the school tab's
+  homepage view, and each subject page — grab a
+  card's header and drop it above/below another
+  card to reorder, or drop it on the left/right
+  edge of a card to place it side by side. the
+  layout is remembered per container)
   ========================================== */
 .sortable-container {
  display: flex;
  flex-direction: column;
  gap: 20px;
+}
+
+
+.card-row {
+ display: flex;
+ gap: 20px;
+ align-items: flex-start;
+ width: 100%;
+}
+
+
+.card-row .draggable-card {
+ flex: 1;
+ min-width: 0;
 }
 
 
@@ -1051,9 +1068,23 @@ body.dark-mode .draggable-card {
 }
 
 
-.draggable-card.drag-over {
- border-color: #f4a261;
- box-shadow: 0 0 0 2px rgba(244, 162, 97, 0.3);
+.draggable-card.drag-over-left {
+ box-shadow: inset 4px 0 0 0 #f4a261;
+}
+
+
+.draggable-card.drag-over-right {
+ box-shadow: inset -4px 0 0 0 #f4a261;
+}
+
+
+.draggable-card.drag-over-top {
+ box-shadow: inset 0 4px 0 0 #f4a261;
+}
+
+
+.draggable-card.drag-over-bottom {
+ box-shadow: inset 0 -4px 0 0 #f4a261;
 }
 
 
