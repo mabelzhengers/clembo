@@ -43,58 +43,70 @@
 
              <div id="homeSortableContainer" class="sortable-container">
 
-                 <div class="draggable-card" data-drag-id="calendar">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>this month</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="calendar">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>this month</span>
+                         </div>
+                         <div id="miniCalendar"></div>
                      </div>
-                     <div id="miniCalendar"></div>
                  </div>
 
-                 <div class="draggable-card" data-drag-id="reminders">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>reminders</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="reminders">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>reminders</span>
+                         </div>
+                         <textarea id="reminderArea" class="reminder-textarea" placeholder="a quote, a reminder, anything"></textarea>
                      </div>
-                     <textarea id="reminderArea" class="reminder-textarea" placeholder="a quote, a reminder, anything"></textarea>
                  </div>
 
-                 <div class="draggable-card" data-drag-id="countdown">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>countdown</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="countdown">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>countdown</span>
+                         </div>
+                         <div id="countdownContainer" class="home-grid"></div>
                      </div>
-                     <div id="countdownContainer" class="home-grid"></div>
                  </div>
 
-                 <div class="draggable-card" data-drag-id="todos">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>to-dos</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="todos">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>to-dos</span>
+                         </div>
+                         <ul id="homeTodoList">
+                             <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                         </ul>
                      </div>
-                     <ul id="homeTodoList">
-                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-                     </ul>
                  </div>
 
-                 <div class="draggable-card" data-drag-id="habits">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>habits</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="habits">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>habits</span>
+                         </div>
+                         <ul id="homeHabitList">
+                             <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                         </ul>
                      </div>
-                     <ul id="homeHabitList">
-                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-                     </ul>
                  </div>
 
-                 <div class="draggable-card" data-drag-id="events">
-                     <div class="draggable-card-header" draggable="true">
-                         <span class="drag-handle-dots"></span>
-                         <span>upcoming events</span>
+                 <div class="card-row">
+                     <div class="draggable-card" data-drag-id="events">
+                         <div class="draggable-card-header" draggable="true">
+                             <span class="drag-handle-dots"></span>
+                             <span>upcoming events</span>
+                         </div>
+                         <ul id="homeEventsList">
+                             <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
+                         </ul>
                      </div>
-                     <ul id="homeEventsList">
-                         <li style="color: #aaa; text-align: center; display: block;">nothing yet</li>
-                     </ul>
                  </div>
 
              </div>
@@ -281,34 +293,38 @@
              <div id="schoolHomeView">
                  <div id="schoolHomeSortableContainer" class="sortable-container">
 
-                     <div class="draggable-card" data-drag-id="subjects">
-                         <div class="draggable-card-header" draggable="true">
-                             <span class="drag-handle-dots"></span>
-                             <span>subjects</span>
-                         </div>
-                         <div class="input-area">
-                             <input type="text" id="newSchoolSubjectInput" placeholder="add a subject (ex. calculus)">
-                             <button id="addSchoolSubjectBtn">add</button>
-                         </div>
-                         <ul id="schoolSubjectManageList"></ul>
-                     </div>
-
-                     <div class="draggable-card" data-drag-id="schedule">
-                         <div class="draggable-card-header" draggable="true">
-                             <span class="drag-handle-dots"></span>
-                             <span>scheduled study sessions</span>
-                         </div>
-                         <div class="school-schedule-form">
-                             <div class="input-area" style="margin-bottom: 10px;">
-                                 <select id="scheduleSubjectSelect"></select>
+                     <div class="card-row">
+                         <div class="draggable-card" data-drag-id="subjects">
+                             <div class="draggable-card-header" draggable="true">
+                                 <span class="drag-handle-dots"></span>
+                                 <span>subjects</span>
                              </div>
                              <div class="input-area">
-                                 <input type="date" id="scheduleDateInput">
-                                 <input type="time" id="scheduleTimeInput">
-                                 <button id="addScheduleBtn">add</button>
+                                 <input type="text" id="newSchoolSubjectInput" placeholder="add a subject (ex. calculus)">
+                                 <button id="addSchoolSubjectBtn">add</button>
                              </div>
+                             <ul id="schoolSubjectManageList"></ul>
                          </div>
-                         <ul id="scheduleList"></ul>
+                     </div>
+
+                     <div class="card-row">
+                         <div class="draggable-card" data-drag-id="schedule">
+                             <div class="draggable-card-header" draggable="true">
+                                 <span class="drag-handle-dots"></span>
+                                 <span>scheduled study sessions</span>
+                             </div>
+                             <div class="school-schedule-form">
+                                 <div class="input-area" style="margin-bottom: 10px;">
+                                     <select id="scheduleSubjectSelect"></select>
+                                 </div>
+                                 <div class="input-area">
+                                     <input type="date" id="scheduleDateInput">
+                                     <input type="time" id="scheduleTimeInput">
+                                     <button id="addScheduleBtn">add</button>
+                                 </div>
+                             </div>
+                             <ul id="scheduleList"></ul>
+                         </div>
                      </div>
 
                  </div>
@@ -317,28 +333,53 @@
              <div id="schoolSubjectView" class="view-hidden">
                  <h3 id="schoolSubjectPageTitle" style="color: #e07a5f; margin-bottom: 18px; text-align: center; font-size: 20px;"></h3>
 
-                 <h4 class="school-section-heading">to-dos</h4>
-                 <div class="input-area">
-                     <input type="text" id="schoolTaskInput" placeholder="add a task for this subject">
-                     <button id="addSchoolTaskBtn">add</button>
-                 </div>
-                 <ul id="schoolTaskList" style="margin-bottom: 25px;"></ul>
+                 <div id="schoolSubjectSortableContainer" class="sortable-container">
 
-                 <h4 class="school-section-heading">resources</h4>
-                 <div class="input-area">
-                     <input type="text" id="schoolResourceNameInput" placeholder="resource name (ex. online classroom)">
-                     <input type="text" id="schoolResourceUrlInput" placeholder="link (optional)">
-                     <button id="addSchoolResourceBtn">add</button>
-                 </div>
-                 <ul id="schoolResourceList" style="margin-bottom: 25px;"></ul>
+                     <div class="card-row">
+                         <div class="draggable-card" data-drag-id="subjectTasks">
+                             <div class="draggable-card-header" draggable="true">
+                                 <span class="drag-handle-dots"></span>
+                                 <span>to-dos</span>
+                             </div>
+                             <div class="input-area">
+                                 <input type="text" id="schoolTaskInput" placeholder="add a task for this subject">
+                                 <button id="addSchoolTaskBtn">add</button>
+                             </div>
+                             <ul id="schoolTaskList"></ul>
+                         </div>
+                     </div>
 
-                 <h4 class="school-section-heading">upcoming tests</h4>
-                 <div class="input-area">
-                     <input type="text" id="schoolTestNameInput" placeholder="test name (ex. midterm)">
-                     <input type="date" id="schoolTestDateInput">
-                     <button id="addSchoolTestBtn">add</button>
+                     <div class="card-row">
+                         <div class="draggable-card" data-drag-id="subjectResources">
+                             <div class="draggable-card-header" draggable="true">
+                                 <span class="drag-handle-dots"></span>
+                                 <span>resources</span>
+                             </div>
+                             <div class="input-area">
+                                 <input type="text" id="schoolResourceNameInput" placeholder="resource name (ex. online classroom)">
+                                 <input type="text" id="schoolResourceUrlInput" placeholder="link (optional)">
+                                 <button id="addSchoolResourceBtn">add</button>
+                             </div>
+                             <ul id="schoolResourceList"></ul>
+                         </div>
+                     </div>
+
+                     <div class="card-row">
+                         <div class="draggable-card" data-drag-id="subjectTests">
+                             <div class="draggable-card-header" draggable="true">
+                                 <span class="drag-handle-dots"></span>
+                                 <span>upcoming tests</span>
+                             </div>
+                             <div class="input-area">
+                                 <input type="text" id="schoolTestNameInput" placeholder="test name (ex. midterm)">
+                                 <input type="date" id="schoolTestDateInput">
+                                 <button id="addSchoolTestBtn">add</button>
+                             </div>
+                             <ul id="schoolTestList"></ul>
+                         </div>
+                     </div>
+
                  </div>
-                 <ul id="schoolTestList"></ul>
              </div>
          </div>
 
