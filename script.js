@@ -3012,10 +3012,25 @@ function saveSortableOrder(container, storageKey) {
 
 // rebuilds the row/card layout from a saved [[id], [id, id], ...]
 // structure; any card not mentioned (e.g. newly added since the
-// layout was saved) gets appended as its own row at the end
+// layout was saved) gets appended as its own row at the end.
+// builds the whole replacement in memory first and only swaps it
+// into the container once it's confirmed to work, so a bad or
+// outdated saved value can never leave the page looking empty
 function restoreSortableLayout(container, storageKey) {
-   const savedRows = JSON.parse(localStorage.getItem(storageKey) || 'null');
-   if (!savedRows) return;
+   let savedRows;
+   try {
+       savedRows = JSON.parse(localStorage.getItem(storageKey) || 'null');
+   } catch (e) {
+       savedRows = null;
+   }
+   if (!savedRows || !Array.isArray(savedRows) || savedRows.length === 0) return;
+
+
+   // migrate an older flat "[id, id, id]" layout (from before side-by-side
+   // rows existed) into the current "[[id], [id, id], ...]" row format
+   if (typeof savedRows[0] === 'string') {
+       savedRows = savedRows.map(id => [id]);
+   }
 
 
    const cardsById = {};
@@ -3024,31 +3039,43 @@ function restoreSortableLayout(container, storageKey) {
    });
 
 
-   container.querySelectorAll(':scope > .card-row').forEach(row => row.remove());
+   try {
+       const fragment = document.createDocumentFragment();
+       const placed = new Set();
 
 
-   const placed = new Set();
-   savedRows.forEach(rowIds => {
-       const validIds = rowIds.filter(id => cardsById[id]);
-       if (validIds.length === 0) return;
-       const row = document.createElement('div');
-       row.className = 'card-row';
-       validIds.forEach(id => {
-           row.appendChild(cardsById[id]);
-           placed.add(id);
-       });
-       container.appendChild(row);
-   });
-
-
-   Object.keys(cardsById).forEach(id => {
-       if (!placed.has(id)) {
+       savedRows.forEach(rowIds => {
+           if (!Array.isArray(rowIds)) return;
+           const validIds = rowIds.filter(id => cardsById[id] && !placed.has(id));
+           if (validIds.length === 0) return;
            const row = document.createElement('div');
            row.className = 'card-row';
-           row.appendChild(cardsById[id]);
-           container.appendChild(row);
-       }
-   });
+           validIds.forEach(id => {
+               row.appendChild(cardsById[id]);
+               placed.add(id);
+           });
+           fragment.appendChild(row);
+       });
+
+
+       Object.keys(cardsById).forEach(id => {
+           if (!placed.has(id)) {
+               const row = document.createElement('div');
+               row.className = 'card-row';
+               row.appendChild(cardsById[id]);
+               fragment.appendChild(row);
+           }
+       });
+
+
+       // only touch the live container once the replacement is fully built
+       container.querySelectorAll(':scope > .card-row').forEach(row => row.remove());
+       container.appendChild(fragment);
+   } catch (e) {
+       // something about the saved layout couldn't be applied — leave
+       // the container's existing (default) card-row markup untouched
+       // rather than risk wiping it out
+   }
 }
 
 
