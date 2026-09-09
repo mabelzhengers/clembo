@@ -1291,6 +1291,11 @@ const newSubjectInput = document.getElementById('newSubjectInput');
 const addSubjectBtn = document.getElementById('addSubjectBtn');
 const subjectManageList = document.getElementById('subjectManageList');
 const trackerSubjectSelect = document.getElementById('trackerSubjectSelect');
+const pastLogSubjectSelect = document.getElementById('pastLogSubjectSelect');
+const pastLogDateInput = document.getElementById('pastLogDateInput');
+const pastLogStartInput = document.getElementById('pastLogStartInput');
+const pastLogEndInput = document.getElementById('pastLogEndInput');
+const logPastSessionBtn = document.getElementById('logPastSessionBtn');
 
 
 // one-time migration from the old fixed cat1/cat2/cat3 setup, if present
@@ -1348,6 +1353,20 @@ function renderTrackerSubjectSelect() {
 }
 
 
+function renderPastLogSubjectSelect() {
+   if (!pastLogSubjectSelect) return;
+   const previousValue = pastLogSubjectSelect.value;
+   pastLogSubjectSelect.innerHTML = "";
+   studySubjects.forEach(subject => {
+       const option = document.createElement('option');
+       option.value = subject;
+       option.textContent = subject;
+       pastLogSubjectSelect.appendChild(option);
+   });
+   if (studySubjects.includes(previousValue)) pastLogSubjectSelect.value = previousValue;
+}
+
+
 function renderSubjectManageList() {
    if (!subjectManageList) return;
    subjectManageList.innerHTML = "";
@@ -1375,6 +1394,7 @@ function renderSubjectManageList() {
            renderSubjectManageList();
            renderSubjectSelect();
            renderTrackerSubjectSelect();
+           renderPastLogSubjectSelect();
            renderStudyLogs();
        });
        li.appendChild(delBtn);
@@ -1393,6 +1413,7 @@ if (addSubjectBtn && newSubjectInput) {
            renderSubjectManageList();
            renderSubjectSelect();
            renderTrackerSubjectSelect();
+           renderPastLogSubjectSelect();
        }
    });
 }
@@ -1417,6 +1438,25 @@ function formatTimeOfDay(ts) {
    hours = hours % 12;
    if (hours === 0) hours = 12;
    return `${hours}:${minutes}${ampm}`;
+}
+
+
+function ordinalSuffix(day) {
+   if (day >= 11 && day <= 13) return 'th';
+   switch (day % 10) {
+       case 1: return 'st';
+       case 2: return 'nd';
+       case 3: return 'rd';
+       default: return 'th';
+   }
+}
+
+
+// formats a "YYYY-MM-DD" key as a date header, e.g. "Sep 8th"
+function formatHistoryDateHeader(dateKeyStr) {
+   const monthsFull = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+   const d = parseDateKey(dateKeyStr);
+   return `${monthsFull[d.getMonth()]} ${d.getDate()}${ordinalSuffix(d.getDate())}`;
 }
 
 
@@ -1471,44 +1511,71 @@ function renderStudyLogs() {
    }
 
 
+   // group sessions by the date they were logged, most recent date
+   // first; sessions with no timestamp (logged before this feature
+   // existed) are grouped together at the very end since their date
+   // isn't known
+   const groups = {};
    studyLogs.forEach((log, index) => {
-       const li = document.createElement('li');
-       li.className = "study-history-item";
+       const key = log.logged ? dateKeyFor(new Date(log.logged)) : 'unknown';
+       if (!groups[key]) groups[key] = [];
+       groups[key].push({ log, index });
+   });
 
 
-       const textWrap = document.createElement('div');
-       textWrap.className = "study-history-text-wrap";
+   const dateKeys = Object.keys(groups).filter(k => k !== 'unknown').sort().reverse();
+   if (groups['unknown']) dateKeys.push('unknown');
 
 
-       const labelSpan = document.createElement('span');
-       labelSpan.textContent = `${log.subject}: +${log.minutes} mins`;
-       textWrap.appendChild(labelSpan);
+   dateKeys.forEach(key => {
+       const headerDiv = document.createElement('div');
+       headerDiv.className = 'study-history-date-header';
+       headerDiv.textContent = key === 'unknown' ? 'earlier' : formatHistoryDateHeader(key);
+       studyHoursList.appendChild(headerDiv);
 
 
-       if (log.logged) {
-           const startTs = log.logged - (log.minutes * 60000);
-           const timeSpan = document.createElement('span');
-           timeSpan.className = "study-history-time";
-           timeSpan.textContent = `${formatTimeOfDay(startTs)} - ${formatTimeOfDay(log.logged)}`;
-           textWrap.appendChild(timeSpan);
-       }
+       const entries = groups[key].slice().sort((a, b) => (a.log.logged || 0) - (b.log.logged || 0));
 
 
-       li.appendChild(textWrap);
+       entries.forEach(({ log, index }) => {
+           const li = document.createElement('li');
+           li.className = "study-history-item";
 
 
-       const delBtn = document.createElement('button');
-       delBtn.textContent = 'x';
-       delBtn.className = 'delete-btn';
-       delBtn.addEventListener('click', () => {
-           studyLogs.splice(index, 1);
-           localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
-           renderStudyLogs();
+           const textWrap = document.createElement('div');
+           textWrap.className = "study-history-text-wrap";
+
+
+           const labelSpan = document.createElement('span');
+           labelSpan.textContent = `${log.subject}: +${log.minutes} mins`;
+           textWrap.appendChild(labelSpan);
+
+
+           if (log.logged) {
+               const startTs = log.logged - (log.minutes * 60000);
+               const timeSpan = document.createElement('span');
+               timeSpan.className = "study-history-time";
+               timeSpan.textContent = `${formatTimeOfDay(startTs)} - ${formatTimeOfDay(log.logged)}`;
+               textWrap.appendChild(timeSpan);
+           }
+
+
+           li.appendChild(textWrap);
+
+
+           const delBtn = document.createElement('button');
+           delBtn.textContent = 'x';
+           delBtn.className = 'delete-btn';
+           delBtn.addEventListener('click', () => {
+               studyLogs.splice(index, 1);
+               localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
+               renderStudyLogs();
+           });
+
+
+           li.appendChild(delBtn);
+           studyHoursList.appendChild(li);
        });
-
-
-       li.appendChild(delBtn);
-       studyHoursList.appendChild(li);
    });
 }
 
@@ -1537,6 +1604,54 @@ if (logHoursBtn) {
 }
 
 
+// logs a session from any past date by picking the exact start and
+// end times it happened between, rather than typing a minute count
+if (logPastSessionBtn) {
+   logPastSessionBtn.addEventListener('click', () => {
+       if (!pastLogSubjectSelect || !pastLogDateInput || !pastLogStartInput || !pastLogEndInput) return;
+       if (studySubjects.length === 0) {
+           alert("add an activity first.");
+           return;
+       }
+       if (!pastLogDateInput.value) {
+           alert("pick a date.");
+           return;
+       }
+       if (!pastLogStartInput.value || !pastLogEndInput.value) {
+           alert("pick a start and end time.");
+           return;
+       }
+
+
+       const [y, m, d] = pastLogDateInput.value.split('-').map(Number);
+       const [startH, startM] = pastLogStartInput.value.split(':').map(Number);
+       const [endH, endM] = pastLogEndInput.value.split(':').map(Number);
+
+
+       const startDate = new Date(y, m - 1, d, startH, startM);
+       const endDate = new Date(y, m - 1, d, endH, endM);
+
+
+       if (endDate <= startDate) {
+           alert("end time must be after the start time.");
+           return;
+       }
+
+
+       const minutes = Math.round((endDate - startDate) / 60000);
+       studyLogs.push({ subject: pastLogSubjectSelect.value, minutes: minutes, logged: endDate.getTime() });
+       localStorage.setItem('myStudyLogs', JSON.stringify(studyLogs));
+
+
+       pastLogStartInput.value = "";
+       pastLogEndInput.value = "";
+       renderStudyLogs();
+       renderStudyBreakdownCharts();
+   });
+}
+if (pastLogDateInput) pastLogDateInput.value = dateKeyFor(new Date());
+
+
 renderSubjectSelect();
 renderSubjectManageList();
 renderStudyLogs();
@@ -1553,6 +1668,7 @@ const studyTrackView = document.getElementById('studyTrackView');
 const studyTimerView = document.getElementById('studyTimerView');
 const studyActivitiesView = document.getElementById('studyActivitiesView');
 const studyBreakdownView = document.getElementById('studyBreakdownView');
+const studyDayView = document.getElementById('studyDayView');
 const breakdownChartDay = document.getElementById('breakdownChartDay');
 const breakdownLegendDay = document.getElementById('breakdownLegendDay');
 const breakdownChartWeek = document.getElementById('breakdownChartWeek');
@@ -1703,8 +1819,213 @@ if (studyViewToggle) {
            if (studyTimerView) studyTimerView.classList.toggle('view-hidden', studyViewMode !== 'timer');
            if (studyActivitiesView) studyActivitiesView.classList.toggle('view-hidden', studyViewMode !== 'activities');
            if (studyBreakdownView) studyBreakdownView.classList.toggle('view-hidden', studyViewMode !== 'breakdown');
+           if (studyDayView) studyDayView.classList.toggle('view-hidden', studyViewMode !== 'day');
+           if (studyViewMode === 'day') renderDayBreakdown();
        });
    });
+}
+
+
+// ==========================================
+// day breakdown — a chosen day's sessions shown
+// two ways: a schedule (time range + a colored
+// bar labeled with the activity and duration),
+// and a large 24-hour clock with colored arcs
+// at the actual times each session happened
+// ==========================================
+const dayViewDateInput = document.getElementById('dayViewDateInput');
+const dayScheduleList = document.getElementById('dayScheduleList');
+const dayClockContainer = document.getElementById('dayClockContainer');
+
+
+// keeps the same activity always drawn in the same color, based on
+// its position in the activities list rather than log order
+function getActivityColor(subject) {
+   const idx = studySubjects.indexOf(subject);
+   return breakdownPalette[(idx >= 0 ? idx : 0) % breakdownPalette.length];
+}
+
+
+function escapeSvgText(str) {
+   return String(str)
+       .replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;');
+}
+
+
+// pulls every logged session touching the given day into
+// {startMin, endMin} (minutes since midnight that day), clamping
+// anything that crosses midnight to stay within this day's 0–1440 range
+function getSessionsForDay(dateKeyStr) {
+   return studyLogs
+       .filter(log => log.logged)
+       .map(log => ({
+           log,
+           startDate: new Date(log.logged - log.minutes * 60000),
+           endDate: new Date(log.logged)
+       }))
+       .filter(({ startDate, endDate }) =>
+           dateKeyFor(startDate) === dateKeyStr || dateKeyFor(endDate) === dateKeyStr
+       )
+       .map(({ log, startDate, endDate }) => {
+           let startMin = (dateKeyFor(startDate) === dateKeyStr)
+               ? startDate.getHours() * 60 + startDate.getMinutes()
+               : 0;
+           let endMin = (dateKeyFor(endDate) === dateKeyStr)
+               ? endDate.getHours() * 60 + endDate.getMinutes()
+               : 1440;
+           if (endMin <= startMin) endMin = Math.min(1440, startMin + 1);
+           return {
+               subject: log.subject,
+               startMin,
+               endMin,
+               startDate,
+               endDate,
+               color: getActivityColor(log.subject)
+           };
+       })
+       .sort((a, b) => a.startMin - b.startMin);
+}
+
+
+function renderDaySchedule(sessions) {
+   if (!dayScheduleList) return;
+   dayScheduleList.innerHTML = "";
+
+
+   if (sessions.length === 0) {
+       dayScheduleList.innerHTML = `<div style="color:#aaa; text-align:center; padding: 20px 0; font-size: 14px;">nothing logged for this day</div>`;
+       return;
+   }
+
+
+   const longest = Math.max(...sessions.map(s => s.endMin - s.startMin), 1);
+   const scale = Math.max(longest, 180); // sessions under 3 hours scale relative to 3 hours
+
+
+   sessions.forEach(s => {
+       const row = document.createElement('div');
+       row.className = 'day-schedule-row';
+
+
+       const timeLabel = document.createElement('div');
+       timeLabel.className = 'day-schedule-time';
+       timeLabel.textContent = `${formatTimeOfDay(s.startDate.getTime())} - ${formatTimeOfDay(s.endDate.getTime())}`;
+       row.appendChild(timeLabel);
+
+
+       const barWrap = document.createElement('div');
+       barWrap.className = 'day-schedule-bar-wrap';
+
+
+       const bar = document.createElement('div');
+       bar.className = 'day-schedule-bar';
+       const widthPercent = Math.min(100, Math.max(20, ((s.endMin - s.startMin) / scale) * 100));
+       bar.style.width = `${widthPercent}%`;
+       bar.style.backgroundColor = s.color;
+       bar.textContent = `${s.subject} — ${formatMinutesToHours(s.endMin - s.startMin)}`;
+       barWrap.appendChild(bar);
+
+
+       row.appendChild(barWrap);
+       dayScheduleList.appendChild(row);
+   });
+}
+
+
+function renderDayClock(sessions) {
+   if (!dayClockContainer) return;
+
+
+   const size = 480;
+   const cx = size / 2;
+   const cy = size / 2;
+   const r = 175;
+   const strokeWidth = 50;
+   const circumference = 2 * Math.PI * r;
+
+
+   let svg = `<svg viewBox="0 0 ${size} ${size}" class="day-clock-svg" xmlns="http://www.w3.org/2000/svg">`;
+
+
+   // background ring represents untracked time
+   svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" class="day-clock-bg-ring" stroke-width="${strokeWidth}" />`;
+
+
+   // hour tick marks — a longer tick every 6 hours, short ticks the rest
+   for (let h = 0; h < 24; h++) {
+       const angle = (h / 24) * 360 - 90;
+       const rad = (angle * Math.PI) / 180;
+       const inner = r + strokeWidth / 2 + 4;
+       const outer = inner + (h % 6 === 0 ? 13 : 6);
+       const x1 = cx + inner * Math.cos(rad);
+       const y1 = cy + inner * Math.sin(rad);
+       const x2 = cx + outer * Math.cos(rad);
+       const y2 = cy + outer * Math.sin(rad);
+       svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="day-clock-tick${h % 6 === 0 ? ' day-clock-tick-major' : ''}" />`;
+   }
+
+
+   // 12am / 6am / 12pm / 6pm labels
+   [{ h: 0, label: '12am' }, { h: 6, label: '6am' }, { h: 12, label: '12pm' }, { h: 18, label: '6pm' }].forEach(({ h, label }) => {
+       const angle = (h / 24) * 360 - 90;
+       const rad = (angle * Math.PI) / 180;
+       const labelRadius = r + strokeWidth / 2 + 32;
+       const x = cx + labelRadius * Math.cos(rad);
+       const y = cy + labelRadius * Math.sin(rad);
+       svg += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" class="day-clock-hour-label" text-anchor="middle" dominant-baseline="middle">${label}</text>`;
+   });
+
+
+   // one colored arc per session, positioned at its actual time of day
+   sessions.forEach(s => {
+       const startFrac = s.startMin / 1440;
+       const frac = (s.endMin - s.startMin) / 1440;
+       const dash = frac * circumference;
+       const gap = circumference - dash;
+       const offset = -startFrac * circumference;
+       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${escapeSvgText(s.subject)}: ${formatMinutesToHours(s.endMin - s.startMin)}</title></circle>`;
+   });
+
+
+   // activity + duration labels inside arcs wide enough to hold them
+   sessions.forEach(s => {
+       const durationDeg = ((s.endMin - s.startMin) / 1440) * 360;
+       if (durationDeg < 14) return;
+       const midMin = (s.startMin + s.endMin) / 2;
+       const angle = (midMin / 1440) * 360 - 90;
+       const rad = (angle * Math.PI) / 180;
+       const x = cx + r * Math.cos(rad);
+       const y = cy + r * Math.sin(rad);
+       svg += `<text x="${x.toFixed(1)}" y="${(y - 6).toFixed(1)}" class="day-clock-segment-label" text-anchor="middle">${escapeSvgText(s.subject)}</text>`;
+       svg += `<text x="${x.toFixed(1)}" y="${(y + 11).toFixed(1)}" class="day-clock-segment-sublabel" text-anchor="middle">${formatMinutesToHours(s.endMin - s.startMin)}</text>`;
+   });
+
+
+   if (sessions.length === 0) {
+       svg += `<text x="${cx}" y="${cy}" class="day-clock-center-label" text-anchor="middle" dominant-baseline="middle">nothing logged</text>`;
+   }
+
+
+   svg += `</svg>`;
+   dayClockContainer.innerHTML = svg;
+}
+
+
+function renderDayBreakdown() {
+   if (!dayViewDateInput) return;
+   const dateKeyStr = dayViewDateInput.value || dateKeyFor(new Date());
+   const sessions = getSessionsForDay(dateKeyStr);
+   renderDaySchedule(sessions);
+   renderDayClock(sessions);
+}
+
+
+if (dayViewDateInput) {
+   dayViewDateInput.value = dateKeyFor(new Date());
+   dayViewDateInput.addEventListener('change', renderDayBreakdown);
 }
 
 
@@ -1868,6 +2189,7 @@ if (trackerSubjectSelect) {
 
 
 renderTrackerSubjectSelect();
+renderPastLogSubjectSelect();
 setTrackerUIState();
 updateTrackerDisplay();
 if (activeTracking) startTrackerTicking();
